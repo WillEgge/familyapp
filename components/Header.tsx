@@ -31,9 +31,9 @@ export default async function Header() {
           </Link>
           {user !== null ? (
             <form className="flex flex-col items-center" action={signOut}>
-              <button className="ml-8 inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded">
+              <Button>
                 {user.email}
-              </button>
+              </Button>
               <span className="text-center mt-1 text-xs text-gray-400">
                 Click to sign out
               </span>
