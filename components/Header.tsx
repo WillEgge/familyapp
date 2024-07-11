@@ -1,4 +1,4 @@
-import { signOut } from "@/app/login/actions";
+import { signOut } from "@/app/signin/actions";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
@@ -31,15 +31,13 @@ export default async function Header() {
           </Link>
           {user !== null ? (
             <form className="flex flex-col items-center" action={signOut}>
-              <Button>
-                {user.email}
-              </Button>
+              <Button>{user.email}</Button>
               <span className="text-center mt-1 text-xs text-gray-400">
                 Click to sign out
               </span>
             </form>
           ) : (
-            <Link href="/login">
+            <Link href="/signin">
               <Button>Sign In</Button>
             </Link>
           )}
