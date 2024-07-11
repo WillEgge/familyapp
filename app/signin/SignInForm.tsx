@@ -59,6 +59,9 @@ export function SignInForm({ searchParams }: SignInFormProps) {
         onSubmit={form.handleSubmit(onSubmit)}
         className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
       >
+        <h2 className="text-2xl font-bold mb-6 text-center text-indigo-600">
+          Sign In
+        </h2>
         <FormField
           control={form.control}
           name="email"
