@@ -75,5 +75,5 @@ export const signInProcess = async (
 export async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    redirect('/login')
+    redirect('/signin')
 }
