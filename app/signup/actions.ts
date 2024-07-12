@@ -2,10 +2,8 @@
 
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/utils/supabase/server";
-// import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { signUpSchema, SignUpFormData } from "./schema";
 import type { Database } from "@/utils/supabase/supabase";
 
@@ -26,9 +24,15 @@ export const signUpProcess = async (
   const supabase = createClient<Database>();
 
   try {
-    const { error, data } = await supabase.auth.signUpWithPassword({
+    const { error, data } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
+      options: {
+        data: {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+        },
+      },
     });
 
     if (error) {
@@ -73,7 +77,7 @@ export const signUpProcess = async (
 };
 
 export async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    redirect('/signup')
+  const supabase = createClient();
+  await supabase.auth.signOut();
+  redirect("/signup");
 }
