@@ -118,7 +118,7 @@ export function SignInForm({ searchParams }: SignInFormProps) {
           )}
         />
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full mt-4">
           {form.formState.isSubmitting ? "Signing In..." : "Sign In"}
         </Button>
         <div>
