@@ -1,5 +1,3 @@
-// app/signup/actions.ts
-
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
@@ -37,38 +35,30 @@ export const signUpProcess = async (
 
     if (error) {
       console.error("Supabase auth error:", error);
-      switch (error.status) {
-        case 400:
-          return {
-            success: false,
-            error: "Invalid email or password. Please try again.",
-          };
-        case 429:
-          return {
-            success: false,
-            error: "Too many attempts. Please try again later.",
-          };
-        default:
-          return {
-            success: false,
-            error: "An error occurred during sign in. Please try again x.",
-          };
+      if (error.message.includes("User already registered")) {
+        return {
+          success: false,
+          error: "This email is already registered. Please try signing in.",
+        };
       }
+      return {
+        success: false,
+        error: "An error occurred during sign up. Please try again.",
+      };
     }
 
     if (data.user) {
-      console.log("Sign in successful, user:", data.user.id);
-      // Instead of redirecting here, we'll return a success response
+      console.log("Sign up successful, user:", data.user.id);
       return { success: true, redirectTo: "/" };
     } else {
       console.error("No user data received from Supabase");
       return {
         success: false,
-        error: "No user data received. Please try again.",
+        error: "An unexpected error occurred. Please try again.",
       };
     }
   } catch (error) {
-    console.error("Unexpected error during sign in:", error);
+    console.error("Unexpected error during sign up:", error);
     return {
       success: false,
       error: "An unexpected error occurred. Please try again later.",
