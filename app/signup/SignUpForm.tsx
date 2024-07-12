@@ -33,6 +33,8 @@ export function SignUpForm({ searchParams }: SignUpFormProps) {
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
+      first_name: "",
+      last_name: "",
       email: "",
       password: "",
     },
@@ -42,13 +44,12 @@ export function SignUpForm({ searchParams }: SignUpFormProps) {
     try {
       const result = await signUpProcess(data);
       if (result.success) {
-        // Use the router to redirect on the client side
         router.push(result.redirectTo);
       } else {
         setServerError(result.error);
       }
     } catch (error) {
-      console.error("Sign-in error:", error);
+      console.error("Sign-up error:", error);
       setServerError("An unexpected error occurred. Please try again.");
     }
   };
@@ -157,19 +158,18 @@ export function SignUpForm({ searchParams }: SignUpFormProps) {
           )}
         />
 
-        <Button type="submit" className="w-full">
-          {form.formState.isSubmitting ? "Signing In..." : "Sign In"}
+        <Button type="submit" className="w-full mt-4">
+          {form.formState.isSubmitting ? "Signing Up..." : "Sign Up"}
         </Button>
-        <div>
+        <div className="mt-4">
           <p className="text-center text-gray-600">
-            If you have an account,{" "}
+            Already have an account?{" "}
             <Link
               href="/signin"
               className="text-indigo-500 hover:text-indigo-600 font-semibold"
             >
               Sign In
-            </Link>{" "}
-            now!
+            </Link>
           </p>
         </div>
       </form>
