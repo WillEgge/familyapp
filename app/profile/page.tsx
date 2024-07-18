@@ -8,21 +8,26 @@ export default async function Profile() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  let profileData = null;
+  let memberData = null;
   if (user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('first_name, last_name')
-      .eq('id', user.id)
+    const { data, error } = await supabase
+      .from('member')
+      .select('first_name, last_name, is_primary, house_id')
+      .eq('email', user.email)
       .single();
-    profileData = data;
+
+    if (error) {
+      console.error("Error fetching member data:", error);
+    } else {
+      memberData = data;
+    }
   }
 
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <div className="w-full max-w-md mx-auto mt-10">
         <h1 className="text-2xl font-bold mb-5">Profile</h1>
-        <ProfileForm user={user} initialData={profileData} />
+        <ProfileForm user={user} initialData={memberData} />
       </div>
     </div>
   );
