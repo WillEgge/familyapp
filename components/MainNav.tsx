@@ -17,9 +17,10 @@ import {
 
 interface MainNavProps {
   isLoggedIn: boolean;
+  isPrimaryMember?: boolean;
 }
 
-export function MainNav({ isLoggedIn }: MainNavProps) {
+export function MainNav({ isLoggedIn, isPrimaryMember }: MainNavProps) {
   const pathname = usePathname();
 
   return (
@@ -88,6 +89,15 @@ export function MainNav({ isLoggedIn }: MainNavProps) {
                 >
                   Communicate with family members
                 </ListItem>
+                {isPrimaryMember && (
+                  <ListItem
+                    href="/add-member"
+                    title="Add Family Member"
+                    active={pathname === "/add-member"}
+                  >
+                    Add new family members to your household
+                  </ListItem>
+                )}
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
