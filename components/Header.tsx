@@ -13,6 +13,21 @@ export default async function Header() {
 
   const isLoggedIn = !!user;
 
+  let isPrimaryMember = false;
+  if (user) {
+    const { data: memberData, error } = await supabase
+      .from('member')
+      .select('is_primary')
+      .eq('email', user.email)
+      .single();
+
+    if (error) {
+      console.error("Error fetching member data:", error);
+    } else {
+      isPrimaryMember = memberData.is_primary;
+    }
+  }
+
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-6 flex items-center justify-between">
@@ -22,7 +37,7 @@ export default async function Header() {
               FamilyHub
             </span>
           </Link>
-          <MainNav isLoggedIn={isLoggedIn} />
+          <MainNav isLoggedIn={isLoggedIn} isPrimaryMember={isPrimaryMember} />
         </div>
         <div>
           {isLoggedIn ? (
