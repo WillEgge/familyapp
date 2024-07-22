@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,13 +41,20 @@ export default function AddMemberForm({ houseId }: { houseId: string }) {
 
   const onSubmit = async (data: AddMemberFormData) => {
     try {
+      console.log("Starting user creation process");
+
       // Create the new user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error("Auth Error:", authError);
+        throw authError;
+      }
+
+      console.log("Auth user created successfully:", authData);
 
       // Add the new member to the member table
       const { error: memberError } = await supabase.from("member").insert({
@@ -56,14 +65,20 @@ export default function AddMemberForm({ houseId }: { houseId: string }) {
         is_primary: false,
       });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Member Insert Error:", memberError);
+        throw memberError;
+      }
+
+      console.log("Member added successfully");
 
       toast.success("Family member added successfully");
       form.reset();
     } catch (error) {
-      console.error("Error adding family member:", error);
+      console.error("Full error object:", error);
       toast.error(
-        "Error adding family member: " + (error.message || "Unknown error")
+        "Error adding family member: " +
+          (error.message || error.error_description || "Unknown error")
       );
     }
   };
