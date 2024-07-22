@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { z } from "zod";
+import { addMemberSchema, AddMemberFormData } from "@/app/add-member/schema";
 import {
   Form,
   FormControl,
@@ -16,15 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-const addMemberSchema = z.object({
-  first_name: z.string().min(2, "First name must be at least 2 characters"),
-  last_name: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-type AddMemberFormData = z.infer<typeof addMemberSchema>;
 
 export default function AddMemberForm({ houseId }: { houseId: string }) {
   const supabase = createClient();
@@ -47,6 +38,12 @@ export default function AddMemberForm({ houseId }: { houseId: string }) {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: {
+            first_name: data.first_name,
+            last_name: data.last_name,
+          },
+        },
       });
 
       if (authError) {
