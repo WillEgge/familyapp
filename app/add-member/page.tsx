@@ -13,6 +13,7 @@ export default async function AddMember() {
   let isPrimaryMember = false;
   let houseId = null;
   let primaryUserLastName = null;
+  let familyMembers = [];
 
   if (user) {
     const { data: memberData, error: memberError } = await supabase
@@ -27,6 +28,20 @@ export default async function AddMember() {
       isPrimaryMember = memberData.is_primary;
       houseId = memberData.house_id;
       primaryUserLastName = memberData.last_name;
+
+      // Fetch family members
+      const { data: familyMembersData, error: familyMembersError } =
+        await supabase
+          .from("member")
+          .select("first_name")
+          .eq("house_id", houseId)
+          .order("first_name");
+
+      if (familyMembersError) {
+        console.error("Error fetching family members:", familyMembersError);
+      } else {
+        familyMembers = familyMembersData;
+      }
     }
   }
 
@@ -47,6 +62,14 @@ export default async function AddMember() {
         primaryUserEmail={user.email}
         primaryUserLastName={primaryUserLastName}
       />
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Current Family Members:</h2>
+        <ul className="list-disc pl-5">
+          {familyMembers.map((member, index) => (
+            <li key={index}>{member.first_name}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
