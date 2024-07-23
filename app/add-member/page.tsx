@@ -12,11 +12,12 @@ export default async function AddMember() {
 
   let isPrimaryMember = false;
   let houseId = null;
+  let primaryUserLastName = null;
 
   if (user) {
     const { data: memberData, error: memberError } = await supabase
       .from("member")
-      .select("is_primary, house_id")
+      .select("is_primary, house_id, last_name")
       .eq("email", user.email)
       .single();
 
@@ -25,6 +26,7 @@ export default async function AddMember() {
     } else {
       isPrimaryMember = memberData.is_primary;
       houseId = memberData.house_id;
+      primaryUserLastName = memberData.last_name;
     }
   }
 
@@ -40,7 +42,11 @@ export default async function AddMember() {
   return (
     <div className="flex-1 flex flex-col gap-6 items-center">
       <h1 className="text-2xl font-bold">Add Family Member</h1>
-      <AddMemberForm houseId={houseId} />
+      <AddMemberForm
+        houseId={houseId}
+        primaryUserEmail={user.email}
+        primaryUserLastName={primaryUserLastName}
+      />
     </div>
   );
 }
