@@ -32,42 +32,58 @@ export default function AddMemberForm({ houseId }: { houseId: string }) {
 
   const onSubmit = async (data: AddMemberFormData) => {
     try {
-      console.log("Starting user creation process");
+      console.log("Starting family member creation process");
 
-      // Create the new user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            first_name: data.first_name,
-            last_name: data.last_name,
-          },
-        },
-      });
+      // First, check if the email already exists in the member table
+      const { data: existingMember, error: checkError } = await supabase
+        .from("member")
+        .select("email")
+        .eq("email", data.email)
+        .single();
 
-      if (authError) {
-        console.error("Auth Error:", authError);
-        throw authError;
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116 means no rows returned, which is what we want
+        console.error("Error checking existing member:", checkError);
+        throw checkError;
       }
 
-      console.log("Auth user created successfully:", authData);
+      if (existingMember) {
+        throw new Error("A member with this email already exists");
+      }
 
       // Add the new member to the member table
-      const { error: memberError } = await supabase.from("member").insert({
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        house_id: houseId,
-        is_primary: false,
-      });
+      const { data: memberData, error: memberError } = await supabase
+        .from("member")
+        .insert({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          house_id: houseId,
+          is_primary: false,
+        })
+        .select()
+        .single();
 
       if (memberError) {
         console.error("Member Insert Error:", memberError);
         throw memberError;
       }
 
-      console.log("Member added successfully");
+      console.log("Member added successfully:", memberData);
+
+      // Now, create the auth user without signing them in
+      const { error: authError } = await supabase.auth.admin.createUser({
+        email: data.email,
+        password: data.password,
+        email_confirm: true,
+      });
+
+      if (authError) {
+        console.error("Auth Error:", authError);
+        // If there's an error creating the auth user, we should delete the member
+        await supabase.from("member").delete().eq("id", memberData.id);
+        throw authError;
+      }
 
       toast.success("Family member added successfully");
       form.reset();
