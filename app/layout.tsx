@@ -1,33 +1,36 @@
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import Header from "@/components/Header";
+import { SideNav } from "@/components/SideNav";
 import Footer from "@/components/Footer";
-import Container from "@/components/Container";
 import { Toaster } from "@/components/ui/sonner";
+import { createClient } from "@/utils/supabase/server";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
-export const metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="en" className={GeistSans.className}>
       <body className="bg-background text-foreground">
-        <Container>
-          <Header />
-          {children}
-          <Footer />
-        </Container>
+        {user ? (
+          <div className="flex">
+            <SideNav />
+            <main className="flex-1 p-4">{children}</main>
+          </div>
+        ) : (
+          <>
+            <Header />
+            <main className="p-4">{children}</main>
+          </>
+        )}
+        <Footer />
         <Toaster />
       </body>
     </html>
