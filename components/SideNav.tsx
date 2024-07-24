@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/signin/actions";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export function SideNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
 
   const navItems = [
@@ -26,8 +27,8 @@ export function SideNav() {
   ];
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    // You might want to add a redirect here
+    await signOut();
+    router.refresh(); // This will trigger a page refresh
   };
 
   return (
@@ -43,10 +44,16 @@ export function SideNav() {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>
-              <Link href="/profile" className="w-full">Profile</Link>
+              <Link href="/profile" className="w-full">
+                Profile
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Button variant="ghost" className="w-full justify-start p-0" onClick={handleSignOut}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start p-0"
+                onClick={handleSignOut}
+              >
                 Log out
               </Button>
             </DropdownMenuItem>
