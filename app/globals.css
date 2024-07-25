@@ -59,7 +59,19 @@
 }
 
 @layer utilities {
-  .sidebar-open .SideNav {
+  .sidebar-nav {
+    transform: translateX(-100%);
+  }
+
+  .sidebar-open .sidebar-nav {
     transform: translateX(0);
+  }
+
+  .sidebar-open .sidebar-closed-icon {
+    display: none;
+  }
+
+  .sidebar-open .sidebar-open-icon {
+    display: block;
   }
 }
