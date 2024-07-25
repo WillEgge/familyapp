@@ -31,9 +31,10 @@ export function SideNav() {
   };
 
   return (
-    <nav className="fixed left-0 top-0 z-40 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out lg:translate-x-0 transform -translate-x-full sidebar-nav">
-      <div className="mb-8 flex items-center justify-between">
-        <span className="text-xl font-bold text-indigo-600">FamilyHub</span>
+    <nav className="fixed left-0 top-0 z-40 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform -translate-x-full sidebar-nav">
+      <div className="mt-14">
+        {" "}
+        {/* Add top margin to account for the toggle button */}
         <DropdownMenu>
           <DropdownMenuTrigger>
             <Avatar>
