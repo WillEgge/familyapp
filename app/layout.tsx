@@ -1,7 +1,7 @@
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import Header from "@/components/Header";
-import { SideNav } from "@/components/SideNav";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/utils/supabase/server";
@@ -20,10 +20,7 @@ export default async function RootLayout({
     <html lang="en" className={GeistSans.className}>
       <body className="bg-background text-foreground">
         {user ? (
-          <div className="flex">
-            <SideNav />
-            <main className="flex-1 p-4">{children}</main>
-          </div>
+          <LayoutWrapper>{children}</LayoutWrapper>
         ) : (
           <>
             <Header />
