@@ -57,3 +57,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .sidebar-open .SideNav {
+    transform: translateX(0);
+  }
+}
