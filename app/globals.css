@@ -74,4 +74,9 @@
   .sidebar-open .sidebar-open-icon {
     display: block;
   }
+
+  /* Ensure content is pushed when sidebar is open */
+  .sidebar-open .layout-content {
+    margin-left: 256px; /* Adjust based on your sidebar width */
+  }
 }
