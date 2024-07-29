@@ -20,8 +20,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { User } from "@supabase/supabase-js";
 
-export default function ProfileForm({ user, initialData }) {
+type InitialData = {
+  first_name?: string;
+  last_name?: string;
+};
+
+type ProfileFormProps = {
+  user: User | null;
+  initialData: InitialData | null;
+};
+
+export default function ProfileForm({ user, initialData }: ProfileFormProps) {
   const supabase = createClient();
 
   const form = useForm<ProfileUpdateFormData>({
@@ -36,6 +47,10 @@ export default function ProfileForm({ user, initialData }) {
 
   const onSubmit = async (data: ProfileUpdateFormData) => {
     try {
+      if (!user || !user.email) {
+        throw new Error("User not found or email not available");
+      }
+
       const { error: memberError } = await supabase
         .from("member")
         .update({
@@ -59,7 +74,8 @@ export default function ProfileForm({ user, initialData }) {
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error(
-        "Error updating profile: " + (error.message || "Unknown error")
+        "Error updating profile: " +
+          (error instanceof Error ? error.message : "Unknown error")
       );
     }
   };
