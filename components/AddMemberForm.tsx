@@ -62,7 +62,6 @@ export default function AddMemberForm({
         .single();
 
       if (memberError) {
-        console.error("Member Insert Error:", memberError);
         throw memberError;
       }
 
@@ -71,11 +70,13 @@ export default function AddMemberForm({
       toast.success("Family member added successfully");
       form.reset();
       onMemberAdded(); // Call the callback function to refresh the list
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Full error object:", error);
-      toast.error(
-        "Error adding family member: " + (error.message || "Unknown error")
-      );
+      if (error instanceof Error) {
+        toast.error("Error adding family member: " + error.message);
+      } else {
+        toast.error("An unknown error occurred while adding family member");
+      }
     }
   };
 
