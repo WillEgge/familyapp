@@ -1,5 +1,3 @@
-// app/signin/actions.ts
-
 "use server";
 
 import { redirect } from "next/navigation";
@@ -7,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 // import { redirect } from "next/navigation";
 import { signInSchema, SignInFormData } from "./schema";
-import type { Database } from "@/utils/supabase/supabase";
+import type { Database } from "@/types/supabase";
 
 type SignInResponse =
   | { success: true; redirectTo: string }
@@ -23,7 +21,7 @@ export const signInProcess = async (
     return { success: false, error: "Invalid input data" };
   }
 
-  const supabase = createClient<Database>();
+  const supabase = createClient();
 
   try {
     const { error, data } = await supabase.auth.signInWithPassword({
@@ -73,7 +71,7 @@ export const signInProcess = async (
 };
 
 export async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    redirect('/signin')
+  const supabase = createClient();
+  await supabase.auth.signOut();
+  redirect("/signin");
 }
