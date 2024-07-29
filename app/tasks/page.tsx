@@ -7,6 +7,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+interface Task {
+  task_id: string | number;
+  task_description: string;
+  due_date: string;
+  priority: string;
+  is_open: boolean;
+}
+
 export default async function TasksPage() {
   const cookieStore = cookies();
   const supabase = createClient();
@@ -61,13 +69,16 @@ export default async function TasksPage() {
     return <div>Error loading tasks. Please try again later.</div>;
   }
 
-  const tasksByAssignee = tasks.reduce((acc, task) => {
-    if (!acc[task.assignee_id]) {
-      acc[task.assignee_id] = [];
-    }
-    acc[task.assignee_id].push(task);
-    return acc;
-  }, {});
+  const tasksByAssignee: { [key: string]: Task[] } = tasks.reduce(
+    (acc, task) => {
+      if (!acc[task.assignee_id]) {
+        acc[task.assignee_id] = [];
+      }
+      acc[task.assignee_id].push(task);
+      return acc;
+    },
+    {} as { [key: string]: Task[] }
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -85,7 +96,7 @@ export default async function TasksPage() {
               {tasksByAssignee[member.member_id] &&
               tasksByAssignee[member.member_id].length > 0 ? (
                 <ul className="list-disc pl-5">
-                  {tasksByAssignee[member.member_id].map((task) => (
+                  {tasksByAssignee[member.member_id].map((task: Task) => (
                     <li key={task.task_id} className="mb-2">
                       <div>{task.task_description}</div>
                       <div className="text-sm text-gray-600">
