@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { signUpSchema, SignUpFormData } from "./schema";
-import type { Database } from "@/utils/supabase/supabase";
+import type { Database } from "@/types/supabase";
 
 type SignUpResponse =
   | { success: true; redirectTo: string }
@@ -19,7 +19,7 @@ export const signUpProcess = async (
     return { success: false, error: "Invalid input data" };
   }
 
-  const supabase = createClient<Database>();
+  const supabase = createClient();
 
   try {
     const { error, data } = await supabase.auth.signUp({
