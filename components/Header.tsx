@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -18,15 +19,36 @@ export default async function Header() {
           <span className="text-3xl font-bold text-indigo-600">FamilyHub</span>
         </Link>
         <nav>
-          <ul className="flex space-x-4">
+          <ul className="flex items-center space-x-8">
             <li>
-              <Link href="/about">About</Link>
+              <Link
+                href="/about"
+                className="text-gray-600 hover:text-indigo-600"
+              >
+                About
+              </Link>
             </li>
             <li>
-              <Link href="/faq">FAQ</Link>
+              <Link href="/faq" className="text-gray-600 hover:text-indigo-600">
+                FAQ
+              </Link>
+            </li>
+            <Separator orientation="vertical" className="h-6 mx-4" />
+            <li>
+              <Link
+                href="/signin"
+                className="text-indigo-600 hover:text-indigo-800 font-semibold"
+              >
+                Sign In
+              </Link>
             </li>
             <li>
-              <Link href="/signin">Sign In</Link>
+              <Link
+                href="/signup"
+                className="bg-indigo-600 text-white hover:bg-indigo-700 py-2 px-4 rounded-md font-semibold"
+              >
+                Sign Up
+              </Link>
             </li>
           </ul>
         </nav>
