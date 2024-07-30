@@ -6,6 +6,12 @@ export const metadata: Metadata = {
     "Learn about FamilyHub, the all-in-one solution for managing your family's tasks, schedules, and responsibilities.",
 };
 
+export const generateStaticParams = async () => {
+  return [];
+};
+
+export const revalidate = 3600;
+
 export default function About() {
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
