@@ -12,6 +12,12 @@ export const metadata: Metadata = {
     "Frequently asked questions about FamilyHub, your family task management solution.",
 };
 
+export const generateStaticParams = async () => {
+  return [];
+};
+
+export const revalidate = 3600;
+
 export default function FAQ() {
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
