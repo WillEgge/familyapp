@@ -22,7 +22,6 @@ export function SideNav() {
     { href: "/", label: "Home" },
     { href: "/tasks", label: "Tasks" },
     { href: "/calendar", label: "Calendar" },
-    { href: "/messaging", label: "Messaging" },
   ];
 
   const handleSignOut = async () => {
