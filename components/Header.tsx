@@ -20,10 +20,10 @@ export default async function Header() {
         <nav>
           <ul className="flex space-x-4">
             <li>
-              <Link href="/">Home</Link>
+              <Link href="/about">About</Link>
             </li>
             <li>
-              <Link href="/about">About</Link>
+              <Link href="/faq">FAQ</Link>
             </li>
             <li>
               <Link href="/signin">Sign In</Link>
