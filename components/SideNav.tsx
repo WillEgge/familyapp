@@ -19,7 +19,7 @@ export function SideNav() {
   const supabase = createClient();
 
   const navItems = [
-    { href: "/", label: "Home" },
+    { href: "/dashboard", label: "Dashboard" },
     { href: "/tasks", label: "Tasks" },
     { href: "/calendar", label: "Calendar" },
   ];
