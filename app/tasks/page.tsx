@@ -15,13 +15,22 @@ interface Task {
   due_date: string;
   priority: string;
   is_open: boolean;
+  assignee_id: number;
+}
+
+interface Member {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  house_id: string;
 }
 
 export default async function TasksPage() {
   const cookieStore = cookies();
   const supabase = createClient();
 
-  const fetchTasks = async (members) => {
+  const fetchTasks = async (members: Member[]): Promise<Task[] | null> => {
     const { data: tasks, error: tasksError } = await supabase
       .from("task")
       .select("*")
@@ -36,7 +45,7 @@ export default async function TasksPage() {
       return null;
     }
 
-    return tasks;
+    return tasks as Task[];
   };
 
   const {
@@ -81,7 +90,7 @@ export default async function TasksPage() {
     return <div>Error loading tasks. Please try again later.</div>;
   }
 
-  const tasksByAssignee: { [key: string]: Task[] } = tasks.reduce(
+  const tasksByAssignee: { [key: number]: Task[] } = tasks.reduce(
     (acc, task) => {
       if (!acc[task.assignee_id]) {
         acc[task.assignee_id] = [];
@@ -89,7 +98,7 @@ export default async function TasksPage() {
       acc[task.assignee_id].push(task);
       return acc;
     },
-    {} as { [key: string]: Task[] }
+    {} as { [key: number]: Task[] }
   );
 
   return (
