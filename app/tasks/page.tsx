@@ -21,6 +21,24 @@ export default async function TasksPage() {
   const cookieStore = cookies();
   const supabase = createClient();
 
+  const fetchTasks = async (members) => {
+    const { data: tasks, error: tasksError } = await supabase
+      .from("task")
+      .select("*")
+      .in(
+        "assignee_id",
+        members.map((m) => m.member_id)
+      )
+      .order("due_date");
+
+    if (tasksError) {
+      console.error("Error fetching tasks:", tasksError);
+      return null;
+    }
+
+    return tasks;
+  };
+
   const {
     data: { user },
     error: userError,
@@ -57,17 +75,9 @@ export default async function TasksPage() {
     return <div>Error loading members. Please try again later.</div>;
   }
 
-  const { data: tasks, error: tasksError } = await supabase
-    .from("task")
-    .select("*")
-    .in(
-      "assignee_id",
-      members.map((m) => m.member_id)
-    )
-    .order("due_date");
+  const tasks = await fetchTasks(members);
 
-  if (tasksError) {
-    console.error("Error fetching tasks:", tasksError);
+  if (!tasks) {
     return <div>Error loading tasks. Please try again later.</div>;
   }
 
