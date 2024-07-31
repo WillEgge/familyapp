@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && nonAuthPages.includes(path)) {
-    return NextResponse.redirect(new URL("/tasks", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;
