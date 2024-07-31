@@ -6,6 +6,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import AddTaskForm from "@/components/AddTaskForm";
+import TaskList from "@/components/TaskList";
 
 interface Task {
   task_id: string | number;
@@ -83,7 +85,8 @@ export default async function TasksPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Family Tasks</h1>
-      <Accordion type="single" collapsible className="w-full">
+      <AddTaskForm members={members} />
+      <Accordion type="single" collapsible className="w-full mt-8">
         {members.map((member) => (
           <AccordionItem
             key={member.member_id}
@@ -93,25 +96,10 @@ export default async function TasksPage() {
               {member.first_name} {member.last_name}
             </AccordionTrigger>
             <AccordionContent>
-              {tasksByAssignee[member.member_id] &&
-              tasksByAssignee[member.member_id].length > 0 ? (
-                <ul className="list-disc pl-5">
-                  {tasksByAssignee[member.member_id].map((task: Task) => (
-                    <li key={task.task_id} className="mb-2">
-                      <div>{task.task_description}</div>
-                      <div className="text-sm text-gray-600">
-                        Due: {new Date(task.due_date).toLocaleDateString()}
-                        {" | "}
-                        Priority: {task.priority}
-                        {" | "}
-                        Status: {task.is_open ? "Open" : "Closed"}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No tasks assigned.</p>
-              )}
+              <TaskList
+                tasks={tasksByAssignee[member.member_id] || []}
+                memberId={member.member_id}
+              />
             </AccordionContent>
           </AccordionItem>
         ))}
