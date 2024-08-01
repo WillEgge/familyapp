@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import {
   profileUpdateSchema,
   ProfileUpdateFormData,
-} from "@/app/profile/schema";
+} from "@/app/(protected)/profile/schema";
 import {
   Form,
   FormControl,

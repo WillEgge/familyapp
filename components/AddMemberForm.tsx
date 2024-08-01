@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { addMemberSchema, AddMemberFormData } from "@/app/add-member/schema";
+import { addMemberSchema, AddMemberFormData } from "@/app/(protected)/add-member/schema";
 import {
   Form,
   FormControl,
