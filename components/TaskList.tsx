@@ -4,7 +4,14 @@ import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Pencil, Trash2, X } from "lucide-react";
 
 interface Task {
   task_id: string | number;
@@ -17,7 +24,7 @@ interface Task {
 interface TaskListProps {
   tasks: Task[];
   memberId: number;
-  onTasksChanged?: () => void; // Made optional
+  onTasksChanged?: () => void;
 }
 
 export default function TaskList({
@@ -28,6 +35,8 @@ export default function TaskList({
   const [localTasks, setLocalTasks] = useState(tasks);
   const [editingTask, setEditingTask] = useState<string | number | null>(null);
   const [editedDescription, setEditedDescription] = useState("");
+  const [editedDueDate, setEditedDueDate] = useState("");
+  const [editedPriority, setEditedPriority] = useState("");
   const supabase = createClient();
 
   const toggleTaskStatus = async (taskId: string | number) => {
@@ -47,19 +56,29 @@ export default function TaskList({
           task.task_id === taskId ? { ...task, is_open: !task.is_open } : task
         )
       );
-      onTasksChanged?.(); // Call if it exists
+      onTasksChanged?.();
     }
   };
 
   const startEditing = (task: Task) => {
     setEditingTask(task.task_id);
     setEditedDescription(task.task_description);
+    setEditedDueDate(task.due_date);
+    setEditedPriority(task.priority);
+  };
+
+  const cancelEditing = () => {
+    setEditingTask(null);
   };
 
   const saveEdit = async (taskId: string | number) => {
     const { data, error } = await supabase
       .from("task")
-      .update({ task_description: editedDescription })
+      .update({
+        task_description: editedDescription,
+        due_date: editedDueDate,
+        priority: editedPriority,
+      })
       .eq("task_id", taskId)
       .select();
 
@@ -69,12 +88,17 @@ export default function TaskList({
       setLocalTasks(
         localTasks.map((task) =>
           task.task_id === taskId
-            ? { ...task, task_description: editedDescription }
+            ? {
+                ...task,
+                task_description: editedDescription,
+                due_date: editedDueDate,
+                priority: editedPriority,
+              }
             : task
         )
       );
       setEditingTask(null);
-      onTasksChanged?.(); // Call if it exists
+      onTasksChanged?.();
     }
   };
 
@@ -88,56 +112,83 @@ export default function TaskList({
       console.error("Error deleting task:", error);
     } else {
       setLocalTasks(localTasks.filter((task) => task.task_id !== taskId));
-      onTasksChanged?.(); // Call if it exists
+      onTasksChanged?.();
     }
   };
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-4">
       {localTasks.map((task) => (
-        <li
-          key={task.task_id}
-          className="flex items-center justify-between bg-white p-4 rounded shadow"
-        >
-          <div className="flex-grow mr-4">
-            {editingTask === task.task_id ? (
+        <li key={task.task_id} className="bg-white p-4 rounded shadow">
+          {editingTask === task.task_id ? (
+            <div className="space-y-2">
               <Input
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="w-full"
+                placeholder="Task description"
               />
-            ) : (
-              <h3 className="text-lg font-medium">{task.task_description}</h3>
-            )}
-            <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
-            <p>Priority: {task.priority}</p>
-          </div>
-          <div className="flex items-center space-x-2">
-            {editingTask === task.task_id ? (
-              <Button onClick={() => saveEdit(task.task_id)}>Save</Button>
-            ) : (
-              <Button
-                onClick={() => startEditing(task)}
-                variant="outline"
-                size="icon"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              onClick={() => toggleTaskStatus(task.task_id)}
-              variant={task.is_open ? "outline" : "default"}
-            >
-              {task.is_open ? "Mark Complete" : "Reopen"}
-            </Button>
-            <Button
-              onClick={() => deleteTask(task.task_id)}
-              variant="destructive"
-              size="icon"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+              <Input
+                type="date"
+                value={editedDueDate}
+                onChange={(e) => setEditedDueDate(e.target.value)}
+                className="w-full"
+              />
+              <Select value={editedPriority} onValueChange={setEditedPriority}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Low</SelectItem>
+                  <SelectItem value="2">Medium</SelectItem>
+                  <SelectItem value="3">High</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end space-x-2">
+                <Button onClick={() => saveEdit(task.task_id)}>Save</Button>
+                <Button variant="outline" onClick={cancelEditing}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-medium">{task.task_description}</h3>
+                <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
+                <p>
+                  Priority:{" "}
+                  {task.priority === "1"
+                    ? "Low"
+                    : task.priority === "2"
+                    ? "Medium"
+                    : "High"}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={() => startEditing(task)}
+                  variant="outline"
+                  size="icon"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => toggleTaskStatus(task.task_id)}
+                  variant={task.is_open ? "outline" : "default"}
+                >
+                  {task.is_open ? "Mark Complete" : "Reopen"}
+                </Button>
+                <Button
+                  onClick={() => deleteTask(task.task_id)}
+                  variant="destructive"
+                  size="icon"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </li>
       ))}
     </ul>
