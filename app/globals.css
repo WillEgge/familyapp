@@ -80,3 +80,11 @@
     margin-left: 256px; /* Adjust based on your sidebar width */
   }
 }
+
+/* New responsive styles for the header */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
