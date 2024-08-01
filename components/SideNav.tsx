@@ -14,7 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/utils/supabase/client";
 
-export function SideNav() {
+interface SideNavProps {
+  isOpen: boolean;
+  closeSidebar: () => void;
+}
+
+export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   const pathname = usePathname();
   const supabase = createClient();
 
@@ -30,10 +35,12 @@ export function SideNav() {
   };
 
   return (
-    <nav className="fixed left-0 top-0 z-40 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform -translate-x-full sidebar-nav">
+    <nav
+      className={`fixed left-0 top-0 z-40 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div className="mt-14">
-        {" "}
-        {/* Add top margin to account for the toggle button */}
         <DropdownMenu>
           <DropdownMenuTrigger>
             <Avatar>
@@ -43,7 +50,7 @@ export function SideNav() {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>
-              <Link href="/profile" className="w-full">
+              <Link href="/profile" className="w-full" onClick={closeSidebar}>
                 Profile
               </Link>
             </DropdownMenuItem>
@@ -68,6 +75,7 @@ export function SideNav() {
                 "block p-2 rounded-md hover:bg-gray-200",
                 pathname === item.href && "bg-indigo-100 text-indigo-600"
               )}
+              onClick={closeSidebar}
             >
               {item.label}
             </Link>
