@@ -81,7 +81,14 @@
   }
 }
 
-/* New responsive styles for the header */
+/* Prevent horizontal scroll */
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Adjust container padding for smaller screens */
 @media (max-width: 768px) {
   .container {
     padding-left: 1rem;
