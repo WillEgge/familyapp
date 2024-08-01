@@ -3,11 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 
-export function SideNavToggle() {
-  const toggleSidebar = () => {
-    document.body.classList.toggle('sidebar-open');
-  };
+interface SideNavToggleProps {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+}
 
+export function SideNavToggle({ isOpen, toggleSidebar }: SideNavToggleProps) {
   return (
     <Button
       variant="ghost"
@@ -16,8 +17,7 @@ export function SideNavToggle() {
       aria-label="Toggle side navigation"
       className="fixed top-4 left-4 z-50"
     >
-      <Menu className="h-6 w-6 sidebar-closed-icon" />
-      <X className="h-6 w-6 sidebar-open-icon hidden" />
+      {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
     </Button>
   );
 }
