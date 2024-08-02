@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import dynamic from "next/dynamic";
+import Overlay from "./Overlay";
 
 const Separator = dynamic(
   () => import("@/components/ui/separator").then((mod) => mod.Separator),
@@ -40,14 +41,21 @@ export default function Header() {
             </button>
           </div>
         </div>
-        {isOpen && <MobileMenu closeMenu={closeMenu} />}
-      </header>
-      {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={closeMenu}
-        ></div>
-      )}
+          className={`
+            md:hidden bg-white shadow-md absolute top-full left-0 right-0 
+            transition-all duration-300 ease-in-out
+            ${
+              isOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-2 pointer-events-none"
+            }
+          `}
+        >
+          <MobileMenu closeMenu={closeMenu} />
+        </div>
+      </header>
+      <Overlay isVisible={isOpen} onClick={closeMenu} />
     </>
   );
 }
@@ -63,7 +71,7 @@ const DesktopMenu = ({ closeMenu }: MenuProps) => (
 );
 
 const MobileMenu = ({ closeMenu }: MenuProps) => (
-  <div className="md:hidden bg-white shadow-md p-4">
+  <div className="p-4">
     <ul className="space-y-4">
       <MenuItems closeMenu={closeMenu} />
     </ul>
