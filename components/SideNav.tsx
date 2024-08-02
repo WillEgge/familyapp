@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/utils/supabase/client";
+import { X } from "lucide-react";
 
 interface SideNavProps {
   isOpen: boolean;
@@ -35,53 +36,67 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   };
 
   return (
-    <nav
-      className={`fixed left-0 top-0 z-40 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      <div className="mt-14">
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Avatar>
-              <AvatarImage src="/path-to-avatar-image.jpg" alt="User" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem>
-              <Link href="/profile" className="w-full" onClick={closeSidebar}>
-                Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Button
-                variant="ghost"
-                className="w-full justify-start p-0"
-                onClick={handleSignOut}
+    <>
+      <nav
+        className={`fixed left-0 top-0 z-50 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <button
+          onClick={closeSidebar}
+          className="absolute top-4 right-4 text-gray-600 hover:text-indigo-600"
+        >
+          <X size={24} />
+        </button>
+        <div className="mt-14">
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Avatar>
+                <AvatarImage src="/path-to-avatar-image.jpg" alt="User" />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <Link href="/profile" className="w-full" onClick={closeSidebar}>
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start p-0"
+                  onClick={handleSignOut}
+                >
+                  Log out
+                </Button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <ul className="space-y-2">
+          {navItems.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "block p-2 rounded-md hover:bg-gray-200",
+                  pathname === item.href && "bg-indigo-100 text-indigo-600"
+                )}
+                onClick={closeSidebar}
               >
-                Log out
-              </Button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <ul className="space-y-2">
-        {navItems.map((item) => (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              className={cn(
-                "block p-2 rounded-md hover:bg-gray-200",
-                pathname === item.href && "bg-indigo-100 text-indigo-600"
-              )}
-              onClick={closeSidebar}
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={closeSidebar}
+        ></div>
+      )}
+    </>
   );
 }
