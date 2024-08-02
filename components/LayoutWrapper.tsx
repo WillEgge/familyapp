@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SideNav } from "@/components/SideNav";
 import { SideNavToggle } from "@/components/SideNavToggle";
 
@@ -9,6 +9,13 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
+
+  useEffect(() => {
+    document.body.classList.toggle("overlay-active", isSidebarOpen);
+    return () => {
+      document.body.classList.remove("overlay-active");
+    };
+  }, [isSidebarOpen]);
 
   return (
     <div className={`flex ${isSidebarOpen ? "sidebar-open" : ""}`}>
