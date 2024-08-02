@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/utils/supabase/client";
 import { X } from "lucide-react";
+import Overlay from "./Overlay";
 
 interface SideNavProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   return (
     <>
       <nav
-        className={`fixed left-0 top-0 z-50 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform ${
+        className={`fixed left-0 top-0 z-50 h-screen w-64 bg-gray-100 p-4 transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -91,12 +92,7 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
           ))}
         </ul>
       </nav>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={closeSidebar}
-        ></div>
-      )}
+      <Overlay isVisible={isOpen} onClick={closeSidebar} />
     </>
   );
 }
