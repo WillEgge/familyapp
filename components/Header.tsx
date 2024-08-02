@@ -12,52 +12,60 @@ const Separator = dynamic(() => import("@/components/ui/separator").then(mod => 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
+  const toggleMenu = () => setIsOpen(!isOpen);
+
+  const closeMenu = () => setIsOpen(false);
+
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-6 flex items-center justify-between">
-        <Link href="/">
+        <Link href="/" onClick={closeMenu}>
           <span className="text-3xl font-bold text-indigo-600">FamilyHub</span>
         </Link>
         <nav className="hidden md:block">
-          <DesktopMenu />
+          <DesktopMenu closeMenu={closeMenu} />
         </nav>
         <div className="md:hidden">
           <button
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={toggleMenu}
             className="text-gray-600 hover:text-indigo-600"
           >
             <Menu size={24} />
           </button>
         </div>
       </div>
-      {isOpen && <MobileMenu />}
+      {isOpen && <MobileMenu closeMenu={closeMenu} />}
     </header>
   );
 }
 
-const DesktopMenu = () => (
+interface MenuProps {
+  closeMenu: () => void;
+}
+
+const DesktopMenu = ({ closeMenu }: MenuProps) => (
   <ul className="flex items-center space-x-8">
-    <MenuItems />
+    <MenuItems closeMenu={closeMenu} />
   </ul>
 );
 
-const MobileMenu = () => (
+const MobileMenu = ({ closeMenu }: MenuProps) => (
   <div className="md:hidden bg-white shadow-md p-4">
     <ul className="space-y-4">
-      <MenuItems />
+      <MenuItems closeMenu={closeMenu} />
     </ul>
   </div>
 );
 
-const MenuItems = () => (
+const MenuItems = ({ closeMenu }: MenuProps) => (
   <>
     <li>
-      <Link href="/about" className="text-gray-600 hover:text-indigo-600">
+      <Link href="/about" onClick={closeMenu} className="text-gray-600 hover:text-indigo-600">
         About
       </Link>
     </li>
     <li>
-      <Link href="/faq" className="text-gray-600 hover:text-indigo-600">
+      <Link href="/faq" onClick={closeMenu} className="text-gray-600 hover:text-indigo-600">
         FAQ
       </Link>
     </li>
@@ -67,6 +75,7 @@ const MenuItems = () => (
     <li>
       <Link
         href="/signin"
+        onClick={closeMenu}
         className="text-indigo-600 hover:text-indigo-800 font-semibold"
       >
         Sign In
@@ -75,6 +84,7 @@ const MenuItems = () => (
     <li>
       <Link
         href="/signup"
+        onClick={closeMenu}
         className="bg-indigo-600 text-white hover:bg-indigo-700 py-2 px-4 rounded-md font-semibold"
       >
         Sign Up
