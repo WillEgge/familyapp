@@ -90,3 +90,19 @@ body {
     padding-right: 1rem;
   }
 }
+
+/* Prevent scrolling when overlay is active */
+body.overlay-active {
+  overflow: hidden;
+}
+
+/* Ensure the header and sidenav are above the overlay */
+header,
+.sidenav {
+  z-index: 50;
+}
+
+/* Style for the dark overlay */
+.overlay {
+  z-index: 40;
+}
