@@ -3,11 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const Separator = dynamic(() => import("@/components/ui/separator").then(mod => mod.Separator), {
-  ssr: false
-});
+const Separator = dynamic(
+  () => import("@/components/ui/separator").then((mod) => mod.Separator),
+  {
+    ssr: false,
+  }
+);
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,25 +20,35 @@ export default function Header() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="bg-white shadow-md">
-      <div className="container mx-auto px-4 py-6 flex items-center justify-between">
-        <Link href="/" onClick={closeMenu}>
-          <span className="text-3xl font-bold text-indigo-600">FamilyHub</span>
-        </Link>
-        <nav className="hidden md:block">
-          <DesktopMenu closeMenu={closeMenu} />
-        </nav>
-        <div className="md:hidden">
-          <button
-            onClick={toggleMenu}
-            className="text-gray-600 hover:text-indigo-600"
-          >
-            <Menu size={24} />
-          </button>
+    <>
+      <header className="bg-white shadow-md relative z-50">
+        <div className="container mx-auto px-4 py-6 flex items-center justify-between">
+          <Link href="/" onClick={closeMenu}>
+            <span className="text-3xl font-bold text-indigo-600">
+              FamilyHub
+            </span>
+          </Link>
+          <nav className="hidden md:block">
+            <DesktopMenu closeMenu={closeMenu} />
+          </nav>
+          <div className="md:hidden">
+            <button
+              onClick={toggleMenu}
+              className="text-gray-600 hover:text-indigo-600"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
         </div>
-      </div>
-      {isOpen && <MobileMenu closeMenu={closeMenu} />}
-    </header>
+        {isOpen && <MobileMenu closeMenu={closeMenu} />}
+      </header>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={closeMenu}
+        ></div>
+      )}
+    </>
   );
 }
 
@@ -60,12 +73,20 @@ const MobileMenu = ({ closeMenu }: MenuProps) => (
 const MenuItems = ({ closeMenu }: MenuProps) => (
   <>
     <li>
-      <Link href="/about" onClick={closeMenu} className="text-gray-600 hover:text-indigo-600">
+      <Link
+        href="/about"
+        onClick={closeMenu}
+        className="text-gray-600 hover:text-indigo-600"
+      >
         About
       </Link>
     </li>
     <li>
-      <Link href="/faq" onClick={closeMenu} className="text-gray-600 hover:text-indigo-600">
+      <Link
+        href="/faq"
+        onClick={closeMenu}
+        className="text-gray-600 hover:text-indigo-600"
+      >
         FAQ
       </Link>
     </li>
