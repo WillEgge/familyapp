@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(public)/signin/actions";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,15 +15,22 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import { X } from "lucide-react";
 import Overlay from "./Overlay";
+import { useEffect, useState } from "react";
 
 interface SideNavProps {
   isOpen: boolean;
   closeSidebar: () => void;
 }
 
+interface AvatarData {
+  initials: string;
+  backgroundColor: string;
+}
+
 export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   const pathname = usePathname();
   const supabase = createClient();
+  const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard" },
@@ -35,6 +42,31 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
     await signOut();
     window.location.reload();
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: memberData } = await supabase
+          .from("member")
+          .select("first_name, last_name")
+          .eq("email", user.email)
+          .single();
+
+        if (memberData) {
+          const response = await fetch(
+            `/api/avatar?firstName=${memberData.first_name}&lastName=${memberData.last_name}&email=${user.email}`
+          );
+          const avatarData: AvatarData = await response.json();
+          setAvatarData(avatarData);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <>
@@ -51,14 +83,21 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
         </button>
         <div className="mt-14">
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Avatar>
-                <AvatarImage src="/path-to-avatar-image.jpg" alt="User" />
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="p-0">
+                <Avatar className="h-10 w-10">
+                  {avatarData && (
+                    <AvatarFallback
+                      style={{ backgroundColor: avatarData.backgroundColor }}
+                    >
+                      {avatarData.initials}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/profile" className="w-full" onClick={closeSidebar}>
                   Profile
                 </Link>
@@ -75,7 +114,7 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <ul className="space-y-2">
+        <ul className="space-y-2 mt-4">
           {navItems.map((item) => (
             <li key={item.href}>
               <Link
