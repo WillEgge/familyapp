@@ -15,7 +15,7 @@ interface Task {
   task_id: string | number;
   task_description: string;
   due_date: string;
-  priority: "low" | "medium" | "high";
+  priority: number;
   is_open: boolean;
   assignee_id: number;
 }
