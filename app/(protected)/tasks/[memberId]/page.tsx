@@ -1,9 +1,9 @@
-// app/(protected)/tasks/[memberId]/page.tsx
-
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import TaskList from "@/components/TaskList";
+import dynamic from "next/dynamic";
 import AddTaskForm from "@/components/AddTaskForm";
+
+const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
 
 export default async function MemberTasks({
   params,
