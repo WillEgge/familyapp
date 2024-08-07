@@ -24,15 +24,13 @@ interface Task {
 interface TaskListProps {
   tasks: Task[];
   memberId: number;
-  onTasksChanged?: () => void;
 }
 
 export default function TaskList({
-  tasks,
+  tasks: initialTasks,
   memberId,
-  onTasksChanged,
 }: TaskListProps) {
-  const [localTasks, setLocalTasks] = useState(tasks);
+  const [tasks, setTasks] = useState(initialTasks);
   const [editingTask, setEditingTask] = useState<string | number | null>(null);
   const [editedDescription, setEditedDescription] = useState("");
   const [editedDueDate, setEditedDueDate] = useState("");
@@ -43,7 +41,7 @@ export default function TaskList({
     const { data, error } = await supabase
       .from("task")
       .update({
-        is_open: !localTasks.find((t) => t.task_id === taskId)?.is_open,
+        is_open: !tasks.find((t) => t.task_id === taskId)?.is_open,
       })
       .eq("task_id", taskId)
       .select();
@@ -51,12 +49,11 @@ export default function TaskList({
     if (error) {
       console.error("Error updating task:", error);
     } else if (data) {
-      setLocalTasks(
-        localTasks.map((task) =>
+      setTasks(
+        tasks.map((task) =>
           task.task_id === taskId ? { ...task, is_open: !task.is_open } : task
         )
       );
-      onTasksChanged?.();
     }
   };
 
@@ -85,8 +82,8 @@ export default function TaskList({
     if (error) {
       console.error("Error updating task:", error);
     } else if (data) {
-      setLocalTasks(
-        localTasks.map((task) =>
+      setTasks(
+        tasks.map((task) =>
           task.task_id === taskId
             ? {
                 ...task,
@@ -98,7 +95,6 @@ export default function TaskList({
         )
       );
       setEditingTask(null);
-      onTasksChanged?.();
     }
   };
 
@@ -111,14 +107,13 @@ export default function TaskList({
     if (error) {
       console.error("Error deleting task:", error);
     } else {
-      setLocalTasks(localTasks.filter((task) => task.task_id !== taskId));
-      onTasksChanged?.();
+      setTasks(tasks.filter((task) => task.task_id !== taskId));
     }
   };
 
   return (
     <ul className="space-y-4">
-      {localTasks.map((task) => (
+      {tasks.map((task) => (
         <li key={task.task_id} className="bg-white p-4 rounded shadow">
           {editingTask === task.task_id ? (
             <div className="space-y-2">
