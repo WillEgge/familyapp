@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import dynamic from "next/dynamic";
 import {
   Accordion,
   AccordionContent,
@@ -7,13 +8,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import AddTaskForm from "@/components/AddTaskForm";
-import TaskList from "@/components/TaskList";
+
+const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
 
 interface Task {
   task_id: string | number;
   task_description: string;
   due_date: string;
-  priority: string;
+  priority: "low" | "medium" | "high";
   is_open: boolean;
   assignee_id: number;
 }
