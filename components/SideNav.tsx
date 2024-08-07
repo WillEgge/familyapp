@@ -31,6 +31,7 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   const pathname = usePathname();
   const supabase = createClient();
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
+  const [userName, setUserName] = useState<string>("");
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard" },
@@ -56,6 +57,7 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
           .single();
 
         if (memberData) {
+          setUserName(`${memberData.first_name} ${memberData.last_name}`);
           const response = await fetch(
             `/api/avatar?firstName=${memberData.first_name}&lastName=${memberData.last_name}&email=${user.email}`
           );
@@ -75,44 +77,55 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <button
-          onClick={closeSidebar}
-          className="absolute top-4 right-4 text-gray-600 hover:text-indigo-600"
-        >
-          <X size={24} />
-        </button>
-        <div className="mt-14">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="p-0">
-                <Avatar className="h-10 w-10">
-                  {avatarData && (
-                    <AvatarFallback
-                      style={{ backgroundColor: avatarData.backgroundColor }}
-                    >
-                      {avatarData.initials}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem asChild>
-                <Link href="/profile" className="w-full" onClick={closeSidebar}>
-                  Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start p-0"
-                  onClick={handleSignOut}
-                >
-                  Log out
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-0">
+                  <Avatar className="h-8 w-8">
+                    {avatarData && (
+                      <AvatarFallback
+                        style={{ backgroundColor: avatarData.backgroundColor }}
+                      >
+                        {avatarData.initials}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
                 </Button>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/profile"
+                    className="w-full"
+                    onClick={closeSidebar}
+                  >
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start p-0"
+                    onClick={handleSignOut}
+                  >
+                    Log out
+                  </Button>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {userName && (
+              <span className="ml-2 text-sm font-medium text-gray-600">
+                {userName}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={closeSidebar}
+            className="text-gray-600 hover:text-indigo-600"
+          >
+            <X size={20} />
+          </button>
         </div>
         <ul className="space-y-2 mt-4">
           {navItems.map((item) => (
