@@ -86,9 +86,6 @@ const TaskItem = ({
     <div ref={drag} className="bg-white p-4 rounded shadow mb-2">
       <h3 className="text-lg font-medium">{task.task_description}</h3>
       <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
-      <p>
-        Priority: {priorityLabels[task.priority as keyof typeof priorityLabels]}
-      </p>
       <div className="flex items-center space-x-2 mt-2">
         <Button onClick={() => onEdit(task)} variant="outline" size="icon">
           <Pencil className="h-4 w-4" />
