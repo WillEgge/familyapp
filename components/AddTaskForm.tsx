@@ -15,10 +15,10 @@ import {
 import { toast } from "sonner";
 
 interface AddTaskFormProps {
-  members: { member_id: number; first_name: string; last_name: string }[];
+  memberId: number;
 }
 
-export default function AddTaskForm({ members }: AddTaskFormProps) {
+export default function AddTaskForm({ memberId }: AddTaskFormProps) {
   const { control, handleSubmit, reset } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const supabase = createClient();
@@ -28,7 +28,7 @@ export default function AddTaskForm({ members }: AddTaskFormProps) {
     const { error } = await supabase.from("task").insert([
       {
         task_description: data.description,
-        assignee_id: parseInt(data.assignee),
+        assignee_id: memberId,
         due_date: data.dueDate,
         priority: parseInt(data.priority),
       },
@@ -45,7 +45,7 @@ export default function AddTaskForm({ members }: AddTaskFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-8">
       <Controller
         name="description"
         control={control}
@@ -57,32 +57,10 @@ export default function AddTaskForm({ members }: AddTaskFormProps) {
       />
 
       <Controller
-        name="assignee"
-        control={control}
-        rules={{ required: "Assignee is required" }}
-        render={({ field }) => (
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select assignee" />
-            </SelectTrigger>
-            <SelectContent>
-              {members.map((member) => (
-                <SelectItem key={member.member_id} value={member.member_id.toString()}>
-                  {member.first_name} {member.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      />
-
-      <Controller
         name="dueDate"
         control={control}
         rules={{ required: "Due date is required" }}
-        render={({ field }) => (
-          <Input {...field} type="date" />
-        )}
+        render={({ field }) => <Input {...field} type="date" />}
       />
 
       <Controller
