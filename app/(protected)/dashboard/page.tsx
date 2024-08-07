@@ -50,10 +50,9 @@ export default async function Dashboard() {
               className="p-4 border rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-4"
             >
               <Avatar className="h-12 w-12">
-                <AvatarImage
-                  src={`/api/avatar?firstName=${member.first_name}&lastName=${member.last_name}&email=${member.email}`}
-                />
-                <AvatarFallback>
+                <AvatarFallback
+                  style={{ backgroundColor: member.avatar_color }}
+                >
                   {member.first_name[0]}
                   {member.last_name[0]}
                 </AvatarFallback>
