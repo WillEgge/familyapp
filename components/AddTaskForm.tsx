@@ -18,8 +18,29 @@ interface AddTaskFormProps {
   memberId: number;
 }
 
+interface Task {
+  task_id: string | number;
+  task_description: string;
+  due_date: string;
+  priority: number;
+  is_open: boolean;
+  assignee_id: number;
+}
+
+const priorityMapping = {
+  low: 1,
+  medium: 2,
+  high: 3,
+};
+
 export default function AddTaskForm({ memberId }: AddTaskFormProps) {
-  const { control, handleSubmit, reset } = useForm();
+  const { control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      description: "",
+      dueDate: "",
+      priority: "low",
+    },
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const supabase = createClient();
 
@@ -30,7 +51,9 @@ export default function AddTaskForm({ memberId }: AddTaskFormProps) {
         task_description: data.description,
         assignee_id: memberId,
         due_date: data.dueDate,
-        priority: parseInt(data.priority),
+        priority:
+          priorityMapping[data.priority as keyof typeof priorityMapping],
+        is_open: true,
       },
     ]);
 
@@ -49,7 +72,6 @@ export default function AddTaskForm({ memberId }: AddTaskFormProps) {
       <Controller
         name="description"
         control={control}
-        defaultValue=""
         rules={{ required: "Description is required" }}
         render={({ field }) => (
           <Input {...field} placeholder="Task description" />
@@ -73,9 +95,9 @@ export default function AddTaskForm({ memberId }: AddTaskFormProps) {
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Low</SelectItem>
-              <SelectItem value="2">Medium</SelectItem>
-              <SelectItem value="3">High</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
             </SelectContent>
           </Select>
         )}
