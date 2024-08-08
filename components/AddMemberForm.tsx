@@ -7,7 +7,10 @@ import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { addMemberSchema, AddMemberFormData } from "@/app/(protected)/add-member/schema";
+import {
+  addMemberSchema,
+  AddMemberFormData,
+} from "@/app/(protected)/add-member/schema";
 import {
   Form,
   FormControl,
@@ -21,12 +24,10 @@ export default function AddMemberForm({
   houseId,
   primaryUserEmail,
   primaryUserLastName,
-  onMemberAdded,
 }: {
   houseId: string;
   primaryUserEmail: string;
   primaryUserLastName: string;
-  onMemberAdded: () => void;
 }) {
   const supabase = createClient();
 
@@ -69,7 +70,6 @@ export default function AddMemberForm({
 
       toast.success("Family member added successfully");
       form.reset();
-      onMemberAdded(); // Call the callback function to refresh the list
     } catch (error: unknown) {
       console.error("Full error object:", error);
       if (error instanceof Error) {
