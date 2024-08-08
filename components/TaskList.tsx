@@ -76,14 +76,30 @@ const TaskItem = ({
   onDelete: (id: string | number) => void;
   onToggleStatus: (id: string | number) => void;
 }) => {
-  const [, drag] = useDrag({
+  const [{ isDragging }, drag, preview] = useDrag({
     type: "TASK",
     item: { id: task.task_id },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
   });
 
   return (
-    <div ref={drag} className="bg-white p-4 rounded shadow mb-2">
-      <h3 className="text-lg font-medium">{task.task_description}</h3>
+    <div
+      ref={preview}
+      className={`bg-white p-4 rounded shadow mb-2 ${
+        isDragging ? "opacity-50" : ""
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">{task.task_description}</h3>
+        <div
+          ref={drag}
+          className="w-6 h-6 bg-gray-200 rounded cursor-move flex items-center justify-center"
+        >
+          ≡
+        </div>
+      </div>
       <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
       <div className="flex items-center space-x-2 mt-2">
         <Button onClick={() => onEdit(task)} variant="outline" size="icon">
