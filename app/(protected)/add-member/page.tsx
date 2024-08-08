@@ -15,6 +15,7 @@ interface FamilyMember {
   last_name: string;
   email: string;
   avatar_color?: string;
+  is_primary: boolean;
 }
 
 export default function AddMember() {
@@ -60,11 +61,11 @@ export default function AddMember() {
 
         const { data: familyMembersData } = await supabase
           .from("member")
-          .select("member_id, first_name, last_name, email, avatar_color")
+          .select("member_id, first_name, last_name, email, avatar_color, is_primary")
           .eq("house_id", memberData.house_id)
           .order("first_name");
 
-        setFamilyMembers(familyMembersData || []);
+        setFamilyMembers(familyMembersData?.filter(member => !member.is_primary) || []);
       }
     }
   };
@@ -188,11 +189,7 @@ export default function AddMember() {
                       {member.first_name} {member.last_name}
                     </h2>
                   )}
-                  <p className="text-gray-600">
-                    {member.email === user.email
-                      ? "Primary Member"
-                      : "Family Member"}
-                  </p>
+                  <p className="text-gray-600">Family Member</p>
                 </div>
                 <Button
                   variant="destructive"
