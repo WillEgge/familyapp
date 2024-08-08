@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Pencil, Trash2, X } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
+import { RoughNotation } from "react-rough-notation";
 
 interface Task {
   task_id: string | number;
@@ -92,7 +93,15 @@ const TaskItem = ({
       }`}
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">{task.task_description}</h3>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={!task.is_open}
+            onCheckedChange={() => onToggleStatus(task.task_id)}
+          />
+          <RoughNotation type="strike-through" show={!task.is_open} color="red">
+            <h3 className="text-lg font-medium">{task.task_description}</h3>
+          </RoughNotation>
+        </div>
         <div
           ref={drag}
           className="w-6 h-6 bg-gray-200 rounded cursor-move flex items-center justify-center"
@@ -102,22 +111,14 @@ const TaskItem = ({
       </div>
       <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
       <div className="flex items-center space-x-2 mt-2">
-        <Button onClick={() => onEdit(task)} variant="outline" size="icon">
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button
-          onClick={() => onToggleStatus(task.task_id)}
-          variant={task.is_open ? "outline" : "default"}
-        >
-          {task.is_open ? "Mark Complete" : "Reopen"}
-        </Button>
-        <Button
+        <Pencil
+          className="h-4 w-4 cursor-pointer"
+          onClick={() => onEdit(task)}
+        />
+        <Trash2
+          className="h-4 w-4 cursor-pointer text-red-500"
           onClick={() => onDelete(task.task_id)}
-          variant="destructive"
-          size="icon"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        />
       </div>
     </div>
   );
@@ -293,10 +294,10 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
               </SelectContent>
             </Select>
             <div className="flex justify-end space-x-2 mt-4">
-              <Button onClick={() => saveEdit(editingTask)}>Save</Button>
-              <Button variant="outline" onClick={cancelEditing}>
+              <button onClick={() => saveEdit(editingTask)}>Save</button>
+              <button onClick={cancelEditing}>
                 <X className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
           </div>
         </div>
