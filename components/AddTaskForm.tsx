@@ -15,7 +15,8 @@ import {
 import { toast } from "sonner";
 
 interface AddTaskFormProps {
-  memberId: number;
+  members?: Array<{ member_id: number; first_name: string; last_name: string }>;
+  memberId?: number;
 }
 
 interface Task {
@@ -33,12 +34,13 @@ const priorityMapping = {
   high: 3,
 };
 
-export default function AddTaskForm({ memberId }: AddTaskFormProps) {
+export default function AddTaskForm({ members, memberId }: AddTaskFormProps) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       description: "",
       dueDate: "",
       priority: "low",
+      assignee: memberId ? memberId.toString() : "",
     },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +51,7 @@ export default function AddTaskForm({ memberId }: AddTaskFormProps) {
     const { error } = await supabase.from("task").insert([
       {
         task_description: data.description,
-        assignee_id: memberId,
+        assignee_id: parseInt(data.assignee),
         due_date: data.dueDate,
         priority:
           priorityMapping[data.priority as keyof typeof priorityMapping],
@@ -102,6 +104,31 @@ export default function AddTaskForm({ memberId }: AddTaskFormProps) {
           </Select>
         )}
       />
+
+      {!memberId && members && (
+        <Controller
+          name="assignee"
+          control={control}
+          rules={{ required: "Assignee is required" }}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select assignee" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((member) => (
+                  <SelectItem
+                    key={member.member_id}
+                    value={member.member_id.toString()}
+                  >
+                    {member.first_name} {member.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      )}
 
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Adding..." : "Add Task"}
