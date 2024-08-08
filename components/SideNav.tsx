@@ -32,6 +32,7 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   const supabase = createClient();
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [isPrimaryMember, setIsPrimaryMember] = useState<boolean>(false);
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard" },
@@ -52,12 +53,13 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
       if (user) {
         const { data: memberData } = await supabase
           .from("member")
-          .select("first_name, last_name")
+          .select("first_name, last_name, is_primary")
           .eq("email", user.email)
           .single();
 
         if (memberData) {
           setUserName(`${memberData.first_name} ${memberData.last_name}`);
+          setIsPrimaryMember(memberData.is_primary);
           const response = await fetch(
             `/api/avatar?firstName=${memberData.first_name}&lastName=${memberData.last_name}&email=${user.email}`
           );
@@ -103,6 +105,17 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
                     Profile
                   </Link>
                 </DropdownMenuItem>
+                {isPrimaryMember && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/add-member"
+                      className="w-full"
+                      onClick={closeSidebar}
+                    >
+                      Add Member
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem>
                   <Button
                     variant="ghost"
