@@ -70,7 +70,7 @@ export default async function MemberTasks({
           Tasks for {member.first_name} {member.last_name}
         </h1>
         <AddTaskForm memberId={memberId} />
-        <TaskList tasks={tasks} memberId={memberId} />
+        <TaskList tasks={tasks as Task[]} memberId={memberId} />
       </div>
     </div>
   );
