@@ -12,8 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pencil, Trash2, X } from "lucide-react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { useDrag, useDrop } from "react-dnd";
 
 interface Task {
   task_id: string | number;
@@ -28,7 +27,7 @@ interface TaskListProps {
   memberId: number;
 }
 
-const priorityLabels = {
+const priorityLabels: { [key: number]: "low" | "medium" | "high" } = {
   1: "low",
   2: "medium",
   3: "high",
@@ -236,59 +235,57 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div>
-        <PrioritySection priority="high" tasks={tasks} onDrop={handleDrop}>
-          {renderTasks("high")}
-        </PrioritySection>
-        <PrioritySection priority="medium" tasks={tasks} onDrop={handleDrop}>
-          {renderTasks("medium")}
-        </PrioritySection>
-        <PrioritySection priority="low" tasks={tasks} onDrop={handleDrop}>
-          {renderTasks("low")}
-        </PrioritySection>
-        {editingTask !== null && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-lg w-96">
-              <h2 className="text-xl font-bold mb-4">Edit Task</h2>
-              <Input
-                value={editedDescription}
-                onChange={(e) => setEditedDescription(e.target.value)}
-                className="w-full mb-2"
-                placeholder="Task description"
-              />
-              <Input
-                type="date"
-                value={editedDueDate}
-                onChange={(e) => setEditedDueDate(e.target.value)}
-                className="w-full mb-2"
-              />
-              <Select
-                value={editedPriority}
-                onValueChange={(value: "low" | "medium" | "high") =>
-                  setEditedPriority(value)
-                }
-              >
-                <SelectTrigger className="w-full mb-2">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button onClick={() => saveEdit(editingTask)}>Save</Button>
-                <Button variant="outline" onClick={cancelEditing}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+    <div>
+      <PrioritySection priority="high" tasks={tasks} onDrop={handleDrop}>
+        {renderTasks("high")}
+      </PrioritySection>
+      <PrioritySection priority="medium" tasks={tasks} onDrop={handleDrop}>
+        {renderTasks("medium")}
+      </PrioritySection>
+      <PrioritySection priority="low" tasks={tasks} onDrop={handleDrop}>
+        {renderTasks("low")}
+      </PrioritySection>
+      {editingTask !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-4 rounded-lg w-96">
+            <h2 className="text-xl font-bold mb-4">Edit Task</h2>
+            <Input
+              value={editedDescription}
+              onChange={(e) => setEditedDescription(e.target.value)}
+              className="w-full mb-2"
+              placeholder="Task description"
+            />
+            <Input
+              type="date"
+              value={editedDueDate}
+              onChange={(e) => setEditedDueDate(e.target.value)}
+              className="w-full mb-2"
+            />
+            <Select
+              value={editedPriority}
+              onValueChange={(value: "low" | "medium" | "high") =>
+                setEditedPriority(value)
+              }
+            >
+              <SelectTrigger className="w-full mb-2">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button onClick={() => saveEdit(editingTask)}>Save</Button>
+              <Button variant="outline" onClick={cancelEditing}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        )}
-      </div>
-    </DndProvider>
+        </div>
+      )}
+    </div>
   );
 };
 
