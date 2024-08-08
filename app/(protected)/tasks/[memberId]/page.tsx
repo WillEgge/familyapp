@@ -5,6 +5,23 @@ import AddTaskForm from "@/components/AddTaskForm";
 
 const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
 
+interface Task {
+  task_id: string | number;
+  task_description: string;
+  due_date: string;
+  priority: number;
+  is_open: boolean;
+  assignee_id: number;
+}
+
+interface Member {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  house_id: string;
+}
+
 export default async function MemberTasks({
   params,
 }: {
