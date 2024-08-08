@@ -20,15 +20,19 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+interface AddMemberFormProps {
+  houseId: string;
+  primaryUserEmail: string;
+  primaryUserLastName: string;
+  onMemberAdded?: () => void;
+}
+
 export default function AddMemberForm({
   houseId,
   primaryUserEmail,
   primaryUserLastName,
-}: {
-  houseId: string;
-  primaryUserEmail: string;
-  primaryUserLastName: string;
-}) {
+  onMemberAdded,
+}: AddMemberFormProps) {
   const supabase = createClient();
 
   const form = useForm<AddMemberFormData>({
@@ -70,6 +74,11 @@ export default function AddMemberForm({
 
       toast.success("Family member added successfully");
       form.reset();
+
+      // Call the onMemberAdded callback if provided
+      if (onMemberAdded) {
+        onMemberAdded();
+      }
     } catch (error: unknown) {
       console.error("Full error object:", error);
       if (error instanceof Error) {
