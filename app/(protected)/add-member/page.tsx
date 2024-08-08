@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { User } from "@supabase/supabase-js";
 
 interface FamilyMember {
   member_id: number;
@@ -17,10 +18,12 @@ interface FamilyMember {
 }
 
 export default function AddMember() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [editingMember, setEditingMember] = useState<number | null>(null);
   const [editedName, setEditedName] = useState({ first: "", last: "" });
+  const [houseId, setHouseId] = useState<string>("");
+  const [primaryUserLastName, setPrimaryUserLastName] = useState<string>("");
   const supabase = createClient();
   const editRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +42,9 @@ export default function AddMember() {
   };
 
   const fetchUserAndMembers = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     setUser(user);
 
     if (user) {
@@ -50,6 +55,9 @@ export default function AddMember() {
         .single();
 
       if (memberData) {
+        setHouseId(memberData.house_id);
+        setPrimaryUserLastName(memberData.last_name);
+
         const { data: familyMembersData } = await supabase
           .from("member")
           .select("member_id, first_name, last_name, email, avatar_color")
@@ -66,8 +74,11 @@ export default function AddMember() {
     setEditedName({ first: member.first_name, last: member.last_name });
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'first' | 'last') => {
-    setEditedName(prev => ({ ...prev, [field]: e.target.value }));
+  const handleNameChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: "first" | "last"
+  ) => {
+    setEditedName((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
   const handleNameSubmit = async () => {
@@ -81,8 +92,8 @@ export default function AddMember() {
     if (error) {
       toast.error("Failed to update name");
     } else {
-      setFamilyMembers(members =>
-        members.map(m =>
+      setFamilyMembers((members) =>
+        members.map((m) =>
           m.member_id === editingMember
             ? { ...m, first_name: editedName.first, last_name: editedName.last }
             : m
@@ -104,7 +115,9 @@ export default function AddMember() {
       if (error) {
         toast.error("Failed to delete member");
       } else {
-        setFamilyMembers(members => members.filter(m => m.member_id !== memberId));
+        setFamilyMembers((members) =>
+          members.filter((m) => m.member_id !== memberId)
+        );
         toast.success("Member deleted successfully");
       }
     }
@@ -123,9 +136,14 @@ export default function AddMember() {
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <div className="w-full max-w-4xl flex justify-center items-center flex-col gap-8">
         <h1 className="text-4xl font-bold">Add Family Member</h1>
-        <AddMemberForm
-          onMemberAdded={fetchUserAndMembers}
-        />
+        {user && houseId && (
+          <AddMemberForm
+            houseId={houseId}
+            primaryUserEmail={user.email ?? ""}
+            primaryUserLastName={primaryUserLastName}
+            onMemberAdded={fetchUserAndMembers}
+          />
+        )}
       </div>
       <div className="w-full max-w-4xl">
         <h2 className="text-2xl font-semibold mb-4">Current Family Members:</h2>
@@ -141,7 +159,9 @@ export default function AddMember() {
               >
                 <Avatar className="h-12 w-12">
                   <AvatarFallback
-                    style={{ backgroundColor: member.avatar_color || '#000000' }}
+                    style={{
+                      backgroundColor: member.avatar_color || "#000000",
+                    }}
                   >
                     {member.first_name[0]}
                     {member.last_name[0]}
@@ -152,13 +172,13 @@ export default function AddMember() {
                     <div ref={editRef} className="flex flex-col gap-2">
                       <Input
                         value={editedName.first}
-                        onChange={(e) => handleNameChange(e, 'first')}
+                        onChange={(e) => handleNameChange(e, "first")}
                         placeholder="First Name"
                         autoFocus
                       />
                       <Input
                         value={editedName.last}
-                        onChange={(e) => handleNameChange(e, 'last')}
+                        onChange={(e) => handleNameChange(e, "last")}
                         placeholder="Last Name"
                       />
                       <Button onClick={handleNameSubmit}>Save</Button>
@@ -169,7 +189,9 @@ export default function AddMember() {
                     </h2>
                   )}
                   <p className="text-gray-600">
-                    {member.email === user.email ? "Primary Member" : "Family Member"}
+                    {member.email === user.email
+                      ? "Primary Member"
+                      : "Family Member"}
                   </p>
                 </div>
                 <Button
