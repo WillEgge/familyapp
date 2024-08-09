@@ -17,6 +17,7 @@ import { toast } from "sonner";
 interface AddTaskFormProps {
   members?: Array<{ member_id: number; first_name: string; last_name: string }>;
   memberId?: number;
+  hidePriority?: boolean;
 }
 
 interface Task {
@@ -34,7 +35,11 @@ const priorityMapping = {
   high: 3,
 };
 
-export default function AddTaskForm({ members, memberId }: AddTaskFormProps) {
+export default function AddTaskForm({
+  members,
+  memberId,
+  hidePriority = false,
+}: AddTaskFormProps) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       description: "",
@@ -48,14 +53,34 @@ export default function AddTaskForm({ members, memberId }: AddTaskFormProps) {
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
+    const { data: existingTasks, error: fetchError } = await supabase
+      .from("task")
+      .select("order")
+      .order("order", { ascending: false })
+      .limit(1);
+
+    if (fetchError) {
+      console.error("Error fetching existing tasks:", fetchError);
+      toast.error("Failed to add task. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const newOrder =
+      existingTasks && existingTasks.length > 0
+        ? existingTasks[0].order + 1
+        : 0;
+
     const { error } = await supabase.from("task").insert([
       {
         task_description: data.description,
         assignee_id: parseInt(data.assignee),
         due_date: data.dueDate,
-        priority:
-          priorityMapping[data.priority as keyof typeof priorityMapping],
+        priority: hidePriority
+          ? 2
+          : priorityMapping[data.priority as keyof typeof priorityMapping],
         is_open: true,
+        order: newOrder,
       },
     ]);
 
@@ -87,23 +112,25 @@ export default function AddTaskForm({ members, memberId }: AddTaskFormProps) {
         render={({ field }) => <Input {...field} type="date" />}
       />
 
-      <Controller
-        name="priority"
-        control={control}
-        rules={{ required: "Priority is required" }}
-        render={({ field }) => (
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-      />
+      {!hidePriority && (
+        <Controller
+          name="priority"
+          control={control}
+          rules={{ required: "Priority is required" }}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      )}
 
       {!memberId && members && (
         <Controller
