@@ -15,15 +15,7 @@ import { Pencil, Trash2, X } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { RoughNotation } from "react-rough-notation";
-
-interface Task {
-  task_id: string | number;
-  task_description: string;
-  due_date: string;
-  priority: number;
-  is_open: boolean;
-  order: number;
-}
+import { Task } from "@/types/task";
 
 interface TaskListProps {
   tasks: Task[];
