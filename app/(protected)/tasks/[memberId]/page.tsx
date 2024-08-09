@@ -2,18 +2,9 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import dynamic from "next/dynamic";
 import AddTaskForm from "@/components/AddTaskForm";
+import { Task } from "@/types/task";
 
 const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
-
-interface Task {
-  task_id: string | number;
-  task_description: string;
-  due_date: string;
-  priority: number;
-  is_open: boolean;
-  assignee_id: number;
-  order: number;
-}
 
 interface Member {
   member_id: number;
@@ -22,7 +13,6 @@ interface Member {
   email: string;
   house_id: string;
 }
-
 export default async function MemberTasks({
   params,
 }: {
@@ -57,7 +47,7 @@ export default async function MemberTasks({
     .from("task")
     .select("*")
     .eq("assignee_id", memberId)
-    .order("order");
+    .order('"order"');
 
   if (tasksError) {
     console.error("Error fetching tasks:", tasksError);
