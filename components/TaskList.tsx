@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pencil, Trash2, X } from "lucide-react";
-import { useDrag, useDrop } from "react-dnd";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { RoughNotation } from "react-rough-notation";
 
 interface Task {
@@ -21,6 +22,7 @@ interface Task {
   due_date: string;
   priority: number;
   is_open: boolean;
+  order: number;
 }
 
 interface TaskListProps {
@@ -28,104 +30,81 @@ interface TaskListProps {
   memberId: number;
 }
 
-const priorityLabels: { [key: number]: "low" | "medium" | "high" } = {
-  1: "low",
-  2: "medium",
-  3: "high",
-};
-
-const priorityMapping = {
-  low: 1,
-  medium: 2,
-  high: 3,
-};
-
-const PrioritySection = ({
-  priority,
-  tasks,
-  onDrop,
-  children,
-}: {
-  priority: "low" | "medium" | "high";
-  tasks: Task[];
-  onDrop: (id: string | number, priority: "low" | "medium" | "high") => void;
-  children: React.ReactNode;
-}) => {
-  const [, drop] = useDrop({
-    accept: "TASK",
-    drop: (item: { id: string | number }) => onDrop(item.id, priority),
-  });
-
-  return (
-    <div ref={drop} className="bg-gray-100 p-4 rounded-md mb-4">
-      <h3 className="text-lg font-semibold mb-2">
-        {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
-      </h3>
-      {children}
-    </div>
-  );
-};
-
 const TaskItem = ({
   task,
+  index,
   onEdit,
   onDelete,
   onToggleStatus,
+  moveTask,
 }: {
   task: Task;
+  index: number;
   onEdit: (task: Task) => void;
   onDelete: (id: string | number) => void;
   onToggleStatus: (id: string | number) => void;
+  moveTask: (dragIndex: number, hoverIndex: number) => void;
 }) => {
-  const [{ isDragging }, drag, preview] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: "TASK",
-    item: { id: task.task_id },
+    item: { id: task.task_id, index },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
+  const [, drop] = useDrop({
+    accept: "TASK",
+    hover(item: { id: string | number; index: number }, monitor) {
+      if (!drag) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      moveTask(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
   return (
     <div
-      ref={preview}
+      ref={(node) => drag(drop(node))}
       className={`bg-white p-4 rounded shadow mb-2 ${
         isDragging ? "opacity-50" : ""
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <Checkbox
             checked={!task.is_open}
             onCheckedChange={() => onToggleStatus(task.task_id)}
           />
           <RoughNotation type="strike-through" show={!task.is_open} color="red">
-            <h3 className="text-lg font-medium">{task.task_description}</h3>
+            <h3 className="text-2xl font-medium">{task.task_description}</h3>
           </RoughNotation>
         </div>
-        <div
-          ref={drag}
-          className="w-6 h-6 bg-gray-200 rounded cursor-move flex items-center justify-center"
-        >
-          ≡
+        <div className="flex items-center space-x-2">
+          <Pencil
+            className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700"
+            onClick={() => onEdit(task)}
+          />
+          <Trash2
+            className="h-6 w-6 cursor-pointer text-red-500 hover:text-red-700"
+            onClick={() => onDelete(task.task_id)}
+          />
         </div>
-      </div>
-      <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
-      <div className="flex items-center space-x-2 mt-2">
-        <Pencil
-          className="h-4 w-4 cursor-pointer"
-          onClick={() => onEdit(task)}
-        />
-        <Trash2
-          className="h-4 w-4 cursor-pointer text-red-500"
-          onClick={() => onDelete(task.task_id)}
-        />
       </div>
     </div>
   );
 };
 
 const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTask, setEditingTask] = useState<string | number | null>(null);
   const [editedDescription, setEditedDescription] = useState("");
   const [editedDueDate, setEditedDueDate] = useState("");
@@ -159,7 +138,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
     setEditedDescription(task.task_description);
     setEditedDueDate(task.due_date);
     setEditedPriority(
-      priorityLabels[task.priority as keyof typeof priorityLabels]
+      task.priority === 1 ? "low" : task.priority === 2 ? "medium" : "high"
     );
   };
 
@@ -168,12 +147,14 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
   };
 
   const saveEdit = async (taskId: string | number) => {
+    const priorityValue =
+      editedPriority === "low" ? 1 : editedPriority === "medium" ? 2 : 3;
     const { data, error } = await supabase
       .from("task")
       .update({
         task_description: editedDescription,
         due_date: editedDueDate,
-        priority: priorityMapping[editedPriority],
+        priority: priorityValue,
       })
       .eq("task_id", taskId)
       .select();
@@ -188,7 +169,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
                 ...task,
                 task_description: editedDescription,
                 due_date: editedDueDate,
-                priority: priorityMapping[editedPriority],
+                priority: priorityValue,
               }
             : task
         )
@@ -210,99 +191,86 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
     }
   };
 
-  const handleDrop = async (
-    taskId: string | number,
-    newPriority: "low" | "medium" | "high"
-  ) => {
-    const { data, error } = await supabase
-      .from("task")
-      .update({ priority: priorityMapping[newPriority] })
-      .eq("task_id", taskId)
-      .select();
+  const moveTask = (dragIndex: number, hoverIndex: number) => {
+    const draggedTask = tasks[dragIndex];
+    const newTasks = [...tasks];
+    newTasks.splice(dragIndex, 1);
+    newTasks.splice(hoverIndex, 0, draggedTask);
+    setTasks(newTasks);
+  };
 
+  const updateTaskOrder = async () => {
+    const updates = tasks.map((task, index) => ({
+      task_id: task.task_id,
+      order: index,
+    }));
+
+    const { error } = await supabase.from("task").upsert(updates);
     if (error) {
-      console.error("Error updating task priority:", error);
-    } else if (data) {
-      setTasks(
-        tasks.map((task) =>
-          task.task_id === taskId
-            ? { ...task, priority: priorityMapping[newPriority] }
-            : task
-        )
-      );
+      console.error("Error updating task order:", error);
     }
   };
 
-  const renderTasks = (priority: "low" | "medium" | "high") => {
-    return tasks
-      .filter(
-        (task) =>
-          priorityLabels[task.priority as keyof typeof priorityLabels] ===
-          priority
-      )
-      .map((task) => (
-        <TaskItem
-          key={task.task_id}
-          task={task}
-          onEdit={startEditing}
-          onDelete={deleteTask}
-          onToggleStatus={toggleTaskStatus}
-        />
-      ));
-  };
+  useEffect(() => {
+    updateTaskOrder();
+  }, [tasks]);
 
   return (
-    <div>
-      <PrioritySection priority="high" tasks={tasks} onDrop={handleDrop}>
-        {renderTasks("high")}
-      </PrioritySection>
-      <PrioritySection priority="medium" tasks={tasks} onDrop={handleDrop}>
-        {renderTasks("medium")}
-      </PrioritySection>
-      <PrioritySection priority="low" tasks={tasks} onDrop={handleDrop}>
-        {renderTasks("low")}
-      </PrioritySection>
-      {editingTask !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Edit Task</h2>
-            <Input
-              value={editedDescription}
-              onChange={(e) => setEditedDescription(e.target.value)}
-              className="w-full mb-2"
-              placeholder="Task description"
-            />
-            <Input
-              type="date"
-              value={editedDueDate}
-              onChange={(e) => setEditedDueDate(e.target.value)}
-              className="w-full mb-2"
-            />
-            <Select
-              value={editedPriority}
-              onValueChange={(value: "low" | "medium" | "high") =>
-                setEditedPriority(value)
-              }
-            >
-              <SelectTrigger className="w-full mb-2">
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end space-x-2 mt-4">
-              <button onClick={() => saveEdit(editingTask)}>Save</button>
-              <button onClick={cancelEditing}>
-                <X className="h-4 w-4" />
-              </button>
+    <DndProvider backend={HTML5Backend}>
+      <div>
+        {tasks.map((task, index) => (
+          <TaskItem
+            key={task.task_id}
+            task={task}
+            index={index}
+            onEdit={startEditing}
+            onDelete={deleteTask}
+            onToggleStatus={toggleTaskStatus}
+            moveTask={moveTask}
+          />
+        ))}
+        {editingTask !== null && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Edit Task</h2>
+              <Input
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                className="w-full mb-2"
+                placeholder="Task description"
+              />
+              <Input
+                type="date"
+                value={editedDueDate}
+                onChange={(e) => setEditedDueDate(e.target.value)}
+                className="w-full mb-2"
+              />
+              <Select
+                value={editedPriority}
+                onValueChange={(value: "low" | "medium" | "high") =>
+                  setEditedPriority(value)
+                }
+              >
+                <SelectTrigger className="w-full mb-2">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end space-x-2 mt-4">
+                <button onClick={() => saveEdit(editingTask)}>Save</button>
+                <button onClick={cancelEditing}>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </DndProvider>
   );
 };
 
