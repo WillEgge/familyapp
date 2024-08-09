@@ -12,6 +12,7 @@ interface Task {
   priority: number;
   is_open: boolean;
   assignee_id: number;
+  order: number;
 }
 
 interface Member {
@@ -56,7 +57,7 @@ export default async function MemberTasks({
     .from("task")
     .select("*")
     .eq("assignee_id", memberId)
-    .order("due_date");
+    .order("order");
 
   if (tasksError) {
     console.error("Error fetching tasks:", tasksError);
@@ -69,8 +70,10 @@ export default async function MemberTasks({
         <h1 className="text-4xl font-bold mb-8">
           Tasks for {member.first_name} {member.last_name}
         </h1>
-        <AddTaskForm memberId={memberId} />
-        <TaskList tasks={tasks as Task[]} memberId={memberId} />
+        <AddTaskForm memberId={memberId} hidePriority={true} />
+        <div className="bg-gray-100 p-4 rounded-md">
+          <TaskList tasks={tasks as Task[]} memberId={memberId} />
+        </div>
       </div>
     </div>
   );
