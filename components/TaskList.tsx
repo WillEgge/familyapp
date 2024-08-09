@@ -77,7 +77,7 @@ const TaskItem = ({
               show={!task.is_open}
               color="red"
             >
-              <h3 className="text-2xl font-medium">{task.task_description}</h3>
+              <h3 className="text-2xl font-medium">{task.title}</h3>
             </RoughNotation>
             {task.description && (
               <p className="text-sm text-gray-600">{task.description}</p>
@@ -126,7 +126,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
 
   const startEditing = (task: Task) => {
     setEditingTask(task.task_id);
-    setEditedDescription(task.task_description);
+    setEditedDescription(task.title);
     setEditedDueDate(task.due_date);
     setEditedPriority(task.priority);
     setEditedTaskDescription(task.description || "");
@@ -140,7 +140,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
     const { data, error } = await supabase
       .from("task")
       .update({
-        task_description: editedDescription,
+        title: editedDescription,
         due_date: editedDueDate,
         priority: editedPriority,
         // Only include description if it exists in the database
@@ -159,7 +159,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
           task.task_id === taskId
             ? {
                 ...task,
-                task_description: editedDescription,
+                title: editedDescription,
                 due_date: editedDueDate,
                 priority: editedPriority,
                 ...(editedTaskDescription !== undefined && {
