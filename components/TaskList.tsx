@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -69,6 +70,7 @@ const TaskItem = ({
       className={`bg-white p-4 rounded shadow mb-2 ${
         isDragging ? "opacity-50" : ""
       }`}
+      onDoubleClick={() => onEdit(task)}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -80,11 +82,7 @@ const TaskItem = ({
             <h3 className="text-2xl font-medium">{task.task_description}</h3>
           </RoughNotation>
         </div>
-        <div className="flex items-center space-x-2">
-          <Pencil
-            className="h-6 w-6 cursor-pointer text-gray-500 hover:text-gray-700"
-            onClick={() => onEdit(task)}
-          />
+        <div className="flex items-center space-x-4">
           <Trash2
             className="h-6 w-6 cursor-pointer text-red-500 hover:text-red-700"
             onClick={() => onDelete(task.task_id)}
@@ -100,9 +98,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
   const [editingTask, setEditingTask] = useState<string | number | null>(null);
   const [editedDescription, setEditedDescription] = useState("");
   const [editedDueDate, setEditedDueDate] = useState("");
-  const [editedPriority, setEditedPriority] = useState<
-    "low" | "medium" | "high"
-  >("low");
+  const [editedPriority, setEditedPriority] = useState<number>(2);
   const supabase = createClient();
 
   const toggleTaskStatus = async (taskId: string | number) => {
@@ -129,9 +125,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
     setEditingTask(task.task_id);
     setEditedDescription(task.task_description);
     setEditedDueDate(task.due_date);
-    setEditedPriority(
-      task.priority === 1 ? "low" : task.priority === 2 ? "medium" : "high"
-    );
+    setEditedPriority(task.priority);
   };
 
   const cancelEditing = () => {
@@ -139,14 +133,12 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
   };
 
   const saveEdit = async (taskId: string | number) => {
-    const priorityValue =
-      editedPriority === "low" ? 1 : editedPriority === "medium" ? 2 : 3;
     const { data, error } = await supabase
       .from("task")
       .update({
         task_description: editedDescription,
         due_date: editedDueDate,
-        priority: priorityValue,
+        priority: editedPriority,
       })
       .eq("task_id", taskId)
       .select();
@@ -161,7 +153,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
                 ...task,
                 task_description: editedDescription,
                 due_date: editedDueDate,
-                priority: priorityValue,
+                priority: editedPriority,
               }
             : task
         )
@@ -237,26 +229,20 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
                 onChange={(e) => setEditedDueDate(e.target.value)}
                 className="w-full mb-2"
               />
-              <Select
+              <Input
+                type="number"
+                min="1"
+                max="3"
                 value={editedPriority}
-                onValueChange={(value: "low" | "medium" | "high") =>
-                  setEditedPriority(value)
-                }
-              >
-                <SelectTrigger className="w-full mb-2">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(e) => setEditedPriority(Number(e.target.value))}
+                className="w-full mb-2"
+                placeholder="Priority (1-3)"
+              />
               <div className="flex justify-end space-x-2 mt-4">
-                <button onClick={() => saveEdit(editingTask)}>Save</button>
-                <button onClick={cancelEditing}>
-                  <X className="h-4 w-4" />
-                </button>
+                <Button onClick={() => saveEdit(editingTask)}>Save</Button>
+                <Button onClick={cancelEditing} variant="outline">
+                  Cancel
+                </Button>
               </div>
             </div>
           </div>
