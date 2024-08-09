@@ -1,6 +1,6 @@
 export interface Task {
   task_id: string | number;
-  task_description: string;
+  title: string;
   description: string | null;
   due_date: string;
   priority: number;
