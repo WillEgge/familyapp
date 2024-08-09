@@ -18,6 +18,7 @@ interface Task {
   priority: number;
   is_open: boolean;
   assignee_id: number;
+  order: number;
 }
 
 interface Member {
@@ -40,7 +41,7 @@ export default async function TasksPage() {
         "assignee_id",
         members.map((m) => m.member_id)
       )
-      .order("due_date");
+      .order("order");
 
     if (tasksError) {
       console.error("Error fetching tasks:", tasksError);
@@ -106,7 +107,7 @@ export default async function TasksPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Family Tasks</h1>
-      <AddTaskForm members={members} />
+      <AddTaskForm members={members} hidePriority={true} />
       <Accordion type="single" collapsible className="w-full mt-8">
         {members.map((member) => (
           <AccordionItem
@@ -117,10 +118,12 @@ export default async function TasksPage() {
               {member.first_name} {member.last_name}
             </AccordionTrigger>
             <AccordionContent>
-              <TaskList
-                tasks={tasksByAssignee[member.member_id] || []}
-                memberId={member.member_id}
-              />
+              <div className="bg-gray-100 p-4 rounded-md">
+                <TaskList
+                  tasks={tasksByAssignee[member.member_id] || []}
+                  memberId={member.member_id}
+                />
+              </div>
             </AccordionContent>
           </AccordionItem>
         ))}
