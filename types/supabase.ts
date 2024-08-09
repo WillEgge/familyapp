@@ -89,6 +89,8 @@ export type Database = {
           priority: number
           task_description: string
           task_id: number
+          description: string | null
+          order: number
         }
         Insert: {
           assignee_id: number
@@ -99,6 +101,8 @@ export type Database = {
           priority?: number
           task_description: string
           task_id?: number
+          description?: string | null
+          order?: number
         }
         Update: {
           assignee_id?: number
@@ -109,6 +113,8 @@ export type Database = {
           priority?: number
           task_description?: string
           task_id?: number
+          description?: string | null
+          order?: number
         }
         Relationships: [
           {
