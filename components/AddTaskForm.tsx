@@ -13,20 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Task } from "@/types/task";
 
 interface AddTaskFormProps {
   members?: Array<{ member_id: number; first_name: string; last_name: string }>;
   memberId?: number;
   hidePriority?: boolean;
-}
-
-interface Task {
-  task_id: string | number;
-  task_description: string;
-  due_date: string;
-  priority: number;
-  is_open: boolean;
-  assignee_id: number;
 }
 
 const priorityMapping = {
@@ -55,8 +47,8 @@ export default function AddTaskForm({
     setIsSubmitting(true);
     const { data: existingTasks, error: fetchError } = await supabase
       .from("task")
-      .select("order")
-      .order("order", { ascending: false })
+      .select('"order"')
+      .order('"order"', { ascending: false })
       .limit(1);
 
     if (fetchError) {
@@ -71,18 +63,18 @@ export default function AddTaskForm({
         ? existingTasks[0].order + 1
         : 0;
 
-    const { error } = await supabase.from("task").insert([
-      {
-        task_description: data.description,
-        assignee_id: parseInt(data.assignee),
-        due_date: data.dueDate,
-        priority: hidePriority
-          ? 2
-          : priorityMapping[data.priority as keyof typeof priorityMapping],
-        is_open: true,
-        order: newOrder,
-      },
-    ]);
+    const newTask: Omit<Task, "task_id"> = {
+      task_description: data.description,
+      assignee_id: parseInt(data.assignee),
+      due_date: data.dueDate,
+      priority: hidePriority
+        ? 2
+        : priorityMapping[data.priority as keyof typeof priorityMapping],
+      is_open: true,
+      "order": newOrder,
+    };
+
+    const { error } = await supabase.from("task").insert([newTask]);
 
     if (error) {
       console.error("Error adding task:", error);
