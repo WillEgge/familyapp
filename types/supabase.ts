@@ -87,7 +87,7 @@ export type Database = {
           is_open: boolean
           is_visible: boolean
           priority: number
-          task_description: string
+          title: string
           task_id: number
           description: string | null
           order: number
@@ -99,7 +99,7 @@ export type Database = {
           is_open?: boolean
           is_visible?: boolean
           priority?: number
-          task_description: string
+          title: string
           task_id?: number
           description?: string | null
           order?: number
@@ -111,7 +111,7 @@ export type Database = {
           is_open?: boolean
           is_visible?: boolean
           priority?: number
-          task_description?: string
+          title?: string
           task_id?: number
           description?: string | null
           order?: number
