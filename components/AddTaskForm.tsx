@@ -34,6 +34,7 @@ export default function AddTaskForm({
 }: AddTaskFormProps) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
+      taskDescription: "",
       description: "",
       dueDate: "",
       priority: "low",
@@ -63,16 +64,21 @@ export default function AddTaskForm({
         ? existingTasks[0].order + 1
         : 0;
 
-    const newTask: Omit<Task, "task_id"> = {
-      task_description: data.description,
+    const newTask: Partial<Task> = {
+      task_description: data.taskDescription,
       assignee_id: parseInt(data.assignee),
       due_date: data.dueDate,
       priority: hidePriority
         ? 2
         : priorityMapping[data.priority as keyof typeof priorityMapping],
       is_open: true,
-      "order": newOrder,
+      order: newOrder,
     };
+
+    // Only include description if it's not empty
+    if (data.description && data.description.trim() !== "") {
+      newTask.description = data.description;
+    }
 
     const { error } = await supabase.from("task").insert([newTask]);
 
@@ -89,11 +95,19 @@ export default function AddTaskForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-8">
       <Controller
-        name="description"
+        name="taskDescription"
         control={control}
-        rules={{ required: "Description is required" }}
+        rules={{ required: "Task description is required" }}
         render={({ field }) => (
           <Input {...field} placeholder="Task description" />
+        )}
+      />
+
+      <Controller
+        name="description"
+        control={control}
+        render={({ field }) => (
+          <Input {...field} placeholder="Task details (optional)" />
         )}
       />
 
