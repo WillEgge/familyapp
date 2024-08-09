@@ -5,13 +5,6 @@ import { createClient } from "@/utils/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Pencil, Trash2, X } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -78,9 +71,18 @@ const TaskItem = ({
             checked={!task.is_open}
             onCheckedChange={() => onToggleStatus(task.task_id)}
           />
-          <RoughNotation type="strike-through" show={!task.is_open} color="red">
-            <h3 className="text-2xl font-medium">{task.task_description}</h3>
-          </RoughNotation>
+          <div>
+            <RoughNotation
+              type="strike-through"
+              show={!task.is_open}
+              color="red"
+            >
+              <h3 className="text-2xl font-medium">{task.task_description}</h3>
+            </RoughNotation>
+            {task.description && (
+              <p className="text-sm text-gray-600">{task.description}</p>
+            )}
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <Trash2
@@ -99,6 +101,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
   const [editedDescription, setEditedDescription] = useState("");
   const [editedDueDate, setEditedDueDate] = useState("");
   const [editedPriority, setEditedPriority] = useState<number>(2);
+  const [editedTaskDescription, setEditedTaskDescription] = useState("");
   const supabase = createClient();
 
   const toggleTaskStatus = async (taskId: string | number) => {
@@ -126,6 +129,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
     setEditedDescription(task.task_description);
     setEditedDueDate(task.due_date);
     setEditedPriority(task.priority);
+    setEditedTaskDescription(task.description || "");
   };
 
   const cancelEditing = () => {
@@ -139,6 +143,10 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
         task_description: editedDescription,
         due_date: editedDueDate,
         priority: editedPriority,
+        // Only include description if it exists in the database
+        ...(editedTaskDescription !== undefined && {
+          description: editedTaskDescription,
+        }),
       })
       .eq("task_id", taskId)
       .select();
@@ -154,6 +162,9 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
                 task_description: editedDescription,
                 due_date: editedDueDate,
                 priority: editedPriority,
+                ...(editedTaskDescription !== undefined && {
+                  description: editedTaskDescription,
+                }),
               }
             : task
         )
@@ -189,9 +200,15 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
       order: index,
     }));
 
-    const { error } = await supabase.from("task").upsert(updates);
-    if (error) {
-      console.error("Error updating task order:", error);
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("task")
+        .update({ order: update.order })
+        .eq("task_id", update.task_id);
+
+      if (error) {
+        console.error("Error updating task order:", error);
+      }
     }
   };
 
@@ -222,6 +239,12 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="w-full mb-2"
                 placeholder="Task description"
+              />
+              <Input
+                value={editedTaskDescription}
+                onChange={(e) => setEditedTaskDescription(e.target.value)}
+                className="w-full mb-2"
+                placeholder="Task details (optional)"
               />
               <Input
                 type="date"
