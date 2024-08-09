@@ -65,7 +65,7 @@ export default function AddTaskForm({
         : 0;
 
     const newTask: Partial<Task> = {
-      task_description: data.taskDescription,
+      title: data.taskDescription,
       assignee_id: parseInt(data.assignee),
       due_date: data.dueDate,
       priority: hidePriority
