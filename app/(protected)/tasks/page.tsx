@@ -8,18 +8,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import AddTaskForm from "@/components/AddTaskForm";
+import { Task } from "@/types/task";
 
 const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
-
-interface Task {
-  task_id: string | number;
-  task_description: string;
-  due_date: string;
-  priority: number;
-  is_open: boolean;
-  assignee_id: number;
-  order: number;
-}
 
 interface Member {
   member_id: number;
@@ -29,27 +20,30 @@ interface Member {
   house_id: string;
 }
 
-export default async function TasksPage() {
+const fetchTasks = async (members: Member[]): Promise<Task[] | null> => {
   const cookieStore = cookies();
   const supabase = createClient();
 
-  const fetchTasks = async (members: Member[]): Promise<Task[] | null> => {
-    const { data: tasks, error: tasksError } = await supabase
-      .from("task")
-      .select("*")
-      .in(
-        "assignee_id",
-        members.map((m) => m.member_id)
-      )
-      .order("order");
+  const { data: tasks, error: tasksError } = await supabase
+    .from("task")
+    .select("*")
+    .in(
+      "assignee_id",
+      members.map((m) => m.member_id)
+    )
+    .order('"order"');
 
-    if (tasksError) {
-      console.error("Error fetching tasks:", tasksError);
-      return null;
-    }
+  if (tasksError) {
+    console.error("Error fetching tasks:", tasksError);
+    return null;
+  }
 
-    return tasks as Task[];
-  };
+  return tasks as Task[];
+};
+
+export default async function TasksPage() {
+  const cookieStore = cookies();
+  const supabase = createClient();
 
   const {
     data: { user },
