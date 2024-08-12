@@ -7,4 +7,6 @@ export interface Task {
   is_open: boolean;
   assignee_id: number;
   order: number;
+  recurrence: "none" | "daily" | "weekly" | "monthly" | "yearly" | null;
+  parent_task_id: string | number | null;
 }
