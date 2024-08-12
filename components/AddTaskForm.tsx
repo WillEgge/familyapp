@@ -39,6 +39,7 @@ export default function AddTaskForm({
       dueDate: "",
       priority: "low",
       assignee: memberId ? memberId.toString() : "",
+      recurrence: "none",
     },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,9 +74,9 @@ export default function AddTaskForm({
         : priorityMapping[data.priority as keyof typeof priorityMapping],
       is_open: true,
       order: newOrder,
+      recurrence: data.recurrence,
     };
 
-    // Only include description if it's not empty
     if (data.description && data.description.trim() !== "") {
       newTask.description = data.description;
     }
@@ -137,6 +138,25 @@ export default function AddTaskForm({
           )}
         />
       )}
+
+      <Controller
+        name="recurrence"
+        control={control}
+        render={({ field }) => (
+          <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select recurrence" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="yearly">Yearly</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      />
 
       {!memberId && members && (
         <Controller
