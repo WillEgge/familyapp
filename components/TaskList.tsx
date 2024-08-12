@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { RoughNotation } from "react-rough-notation";
@@ -16,21 +16,26 @@ interface TaskListProps {
   memberId: number;
 }
 
-const TaskItem = ({
-  task,
-  index,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-  moveTask,
-}: {
+interface TaskItemProps {
   task: Task;
   index: number;
   onEdit: (task: Task) => void;
   onDelete: (id: string | number) => void;
   onToggleStatus: (id: string | number) => void;
   moveTask: (dragIndex: number, hoverIndex: number) => void;
+}
+
+const TaskItem: React.FC<TaskItemProps> = ({
+  task,
+  index,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+  moveTask,
 }) => {
+  const [isMoving, setIsMoving] = useState(false);
+  const [showStrikethrough, setShowStrikethrough] = useState(!task.is_open);
+
   const [{ isDragging }, drag] = useDrag({
     type: "TASK",
     item: { id: task.task_id, index },
@@ -57,12 +62,22 @@ const TaskItem = ({
     },
   });
 
+  useEffect(() => {
+    setIsMoving(true);
+    const timer = setTimeout(() => {
+      setIsMoving(false);
+      setShowStrikethrough(!task.is_open);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [task.is_open]);
+
   return (
     <div
       ref={(node) => drag(drop(node))}
       className={`bg-white p-4 rounded shadow mb-2 ${
         isDragging ? "opacity-50" : ""
-      }`}
+      } transition-all duration-300 ease-in-out`}
       onDoubleClick={() => onEdit(task)}
     >
       <div className="flex items-center justify-between">
@@ -74,13 +89,25 @@ const TaskItem = ({
           <div>
             <RoughNotation
               type="strike-through"
-              show={!task.is_open}
+              show={!isMoving && showStrikethrough}
               color="red"
             >
-              <h3 className="text-2xl font-medium">{task.title}</h3>
+              <h3
+                className={`text-2xl font-medium ${
+                  !task.is_open ? "text-gray-500" : ""
+                }`}
+              >
+                {task.title}
+              </h3>
             </RoughNotation>
             {task.description && (
-              <p className="text-sm text-gray-600">{task.description}</p>
+              <p
+                className={`text-sm text-gray-600 ${
+                  !task.is_open ? "text-gray-400" : ""
+                }`}
+              >
+                {task.description}
+              </p>
             )}
           </div>
         </div>
@@ -95,14 +122,26 @@ const TaskItem = ({
   );
 };
 
-const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
+const TaskList: React.FC<TaskListProps> = ({
+  tasks: initialTasks,
+  memberId,
+}) => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [todoTasks, setTodoTasks] = useState<Task[]>([]);
+  const [doneTasks, setDoneTasks] = useState<Task[]>([]);
   const [editingTask, setEditingTask] = useState<string | number | null>(null);
   const [editedDescription, setEditedDescription] = useState("");
   const [editedDueDate, setEditedDueDate] = useState("");
   const [editedPriority, setEditedPriority] = useState<number>(2);
   const [editedTaskDescription, setEditedTaskDescription] = useState("");
   const supabase = createClient();
+
+  useEffect(() => {
+    const todo = tasks.filter((task) => task.is_open);
+    const done = tasks.filter((task) => !task.is_open);
+    setTodoTasks(todo);
+    setDoneTasks(done);
+  }, [tasks]);
 
   const toggleTaskStatus = async (taskId: string | number) => {
     const { data, error } = await supabase
@@ -143,10 +182,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
         title: editedDescription,
         due_date: editedDueDate,
         priority: editedPriority,
-        // Only include description if it exists in the database
-        ...(editedTaskDescription !== undefined && {
-          description: editedTaskDescription,
-        }),
+        description: editedTaskDescription,
       })
       .eq("task_id", taskId)
       .select();
@@ -162,9 +198,7 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
                 title: editedDescription,
                 due_date: editedDueDate,
                 priority: editedPriority,
-                ...(editedTaskDescription !== undefined && {
-                  description: editedTaskDescription,
-                }),
+                description: editedTaskDescription,
               }
             : task
         )
@@ -219,17 +253,41 @@ const TaskList = ({ tasks: initialTasks, memberId }: TaskListProps) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <div>
-        {tasks.map((task, index) => (
-          <TaskItem
-            key={task.task_id}
-            task={task}
-            index={index}
-            onEdit={startEditing}
-            onDelete={deleteTask}
-            onToggleStatus={toggleTaskStatus}
-            moveTask={moveTask}
-          />
-        ))}
+        {todoTasks.length > 0 && (
+          <>
+            <h2 className="text-xl font-bold mb-4">Todo</h2>
+            {todoTasks.map((task, index) => (
+              <TaskItem
+                key={task.task_id}
+                task={task}
+                index={index}
+                onEdit={startEditing}
+                onDelete={deleteTask}
+                onToggleStatus={toggleTaskStatus}
+                moveTask={moveTask}
+              />
+            ))}
+          </>
+        )}
+        {doneTasks.length > 0 && (
+          <>
+            <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
+            {doneTasks.map((task, index) => (
+              <TaskItem
+                key={task.task_id}
+                task={task}
+                index={index}
+                onEdit={startEditing}
+                onDelete={deleteTask}
+                onToggleStatus={toggleTaskStatus}
+                moveTask={moveTask}
+              />
+            ))}
+          </>
+        )}
+        {todoTasks.length === 0 && doneTasks.length === 0 && (
+          <p className="text-center text-gray-500 mt-8">No tasks available.</p>
+        )}
         {editingTask !== null && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white p-4 rounded-lg w-96">
