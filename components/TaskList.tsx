@@ -10,6 +10,7 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { RoughNotation } from "react-rough-notation";
 import { Task } from "@/types/task";
+import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 
 interface TaskListProps {
   tasks: Task[];
@@ -109,6 +110,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 {task.description}
               </p>
             )}
+            {task.recurrence && task.recurrence !== "none" && (
+              <span className="text-sm text-gray-500 ml-2">
+                Repeats: {task.recurrence}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center space-x-4">
@@ -144,10 +150,13 @@ const TaskList: React.FC<TaskListProps> = ({
   }, [tasks]);
 
   const toggleTaskStatus = async (taskId: string | number) => {
+    const task = tasks.find((t) => t.task_id === taskId);
+    if (!task) return;
+
     const { data, error } = await supabase
       .from("task")
       .update({
-        is_open: !tasks.find((t) => t.task_id === taskId)?.is_open,
+        is_open: !task.is_open,
       })
       .eq("task_id", taskId)
       .select();
@@ -160,6 +169,48 @@ const TaskList: React.FC<TaskListProps> = ({
           task.task_id === taskId ? { ...task, is_open: !task.is_open } : task
         )
       );
+
+      // Create a new recurring task if necessary
+      if (!task.is_open && task.recurrence && task.recurrence !== "none") {
+        const newDueDate = calculateNextDueDate(task.due_date, task.recurrence);
+        const newTask: Partial<Task> = {
+          ...task,
+          due_date: newDueDate,
+          is_open: true,
+          parent_task_id: task.task_id,
+        };
+        delete newTask.task_id;
+
+        const { data: newTaskData, error: newTaskError } = await supabase
+          .from("task")
+          .insert([newTask])
+          .select();
+
+        if (newTaskError) {
+          console.error("Error creating recurring task:", newTaskError);
+        } else if (newTaskData) {
+          setTasks([...tasks, newTaskData[0]]);
+        }
+      }
+    }
+  };
+
+  const calculateNextDueDate = (
+    currentDueDate: string,
+    recurrence: string
+  ): string => {
+    const date = new Date(currentDueDate);
+    switch (recurrence) {
+      case "daily":
+        return addDays(date, 1).toISOString();
+      case "weekly":
+        return addWeeks(date, 1).toISOString();
+      case "monthly":
+        return addMonths(date, 1).toISOString();
+      case "yearly":
+        return addYears(date, 1).toISOString();
+      default:
+        return currentDueDate;
     }
   };
 
