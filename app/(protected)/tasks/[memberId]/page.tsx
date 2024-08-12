@@ -6,13 +6,6 @@ import { Task } from "@/types/task";
 
 const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
 
-interface Member {
-  member_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  house_id: string;
-}
 export default async function MemberTasks({
   params,
 }: {
