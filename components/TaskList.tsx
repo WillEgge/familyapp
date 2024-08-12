@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, RepeatIcon } from "lucide-react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { RoughNotation } from "react-rough-notation";
@@ -102,7 +102,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   {task.title}
                 </h3>
               </RoughNotation>
-              {task.recurrence && task.recurrence !== "none" && (
+              {task.due_date && (
                 <span
                   className={`ml-2 text-sm ${
                     !task.is_open
@@ -110,7 +110,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
                       : "text-blue-500 bg-blue-100 px-2 py-1 rounded"
                   }`}
                 >
-                  Repeats: {task.recurrence}
+                  {new Date(task.due_date).toLocaleDateString()}
+                  {task.recurrence && task.recurrence !== "none" && (
+                    <RepeatIcon className="inline-block ml-1 w-4 h-4" />
+                  )}
                 </span>
               )}
             </div>
