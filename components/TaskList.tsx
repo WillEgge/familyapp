@@ -88,19 +88,32 @@ const TaskItem: React.FC<TaskItemProps> = ({
             onCheckedChange={() => onToggleStatus(task.task_id)}
           />
           <div>
-            <RoughNotation
-              type="strike-through"
-              show={!isMoving && showStrikethrough}
-              color="red"
-            >
-              <h3
-                className={`text-2xl font-medium ${
-                  !task.is_open ? "text-gray-500" : ""
-                }`}
+            <div className="flex items-center">
+              <RoughNotation
+                type="strike-through"
+                show={!isMoving && showStrikethrough}
+                color="red"
               >
-                {task.title}
-              </h3>
-            </RoughNotation>
+                <h3
+                  className={`text-2xl font-medium ${
+                    !task.is_open ? "text-gray-500" : ""
+                  }`}
+                >
+                  {task.title}
+                </h3>
+              </RoughNotation>
+              {task.recurrence && task.recurrence !== "none" && (
+                <span
+                  className={`ml-2 text-sm ${
+                    !task.is_open
+                      ? "text-gray-400"
+                      : "text-blue-500 bg-blue-100 px-2 py-1 rounded"
+                  }`}
+                >
+                  Repeats: {task.recurrence}
+                </span>
+              )}
+            </div>
             {task.description && (
               <p
                 className={`text-sm text-gray-600 ${
@@ -110,16 +123,15 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 {task.description}
               </p>
             )}
-            {task.recurrence && task.recurrence !== "none" && (
-              <span className="text-sm text-gray-500 ml-2">
-                Repeats: {task.recurrence}
-              </span>
-            )}
           </div>
         </div>
         <div className="flex items-center space-x-4">
           <Trash2
-            className="h-6 w-6 cursor-pointer text-red-500 hover:text-red-700"
+            className={`h-6 w-6 cursor-pointer ${
+              !task.is_open
+                ? "text-gray-400"
+                : "text-red-500 hover:text-red-700"
+            }`}
             onClick={() => onDelete(task.task_id)}
           />
         </div>
@@ -153,10 +165,12 @@ const TaskList: React.FC<TaskListProps> = ({
     const task = tasks.find((t) => t.task_id === taskId);
     if (!task) return;
 
+    const newStatus = !task.is_open;
+
     const { data, error } = await supabase
       .from("task")
       .update({
-        is_open: !task.is_open,
+        is_open: newStatus,
       })
       .eq("task_id", taskId)
       .select();
@@ -165,21 +179,24 @@ const TaskList: React.FC<TaskListProps> = ({
       console.error("Error updating task:", error);
     } else if (data) {
       setTasks(
-        tasks.map((task) =>
-          task.task_id === taskId ? { ...task, is_open: !task.is_open } : task
+        tasks.map((t) =>
+          t.task_id === taskId ? { ...t, is_open: newStatus } : t
         )
       );
 
-      // Create a new recurring task if necessary
-      if (!task.is_open && task.recurrence && task.recurrence !== "none") {
+      // Create a new recurring task only when marking as complete
+      if (!newStatus && task.recurrence && task.recurrence !== "none") {
         const newDueDate = calculateNextDueDate(task.due_date, task.recurrence);
         const newTask: Partial<Task> = {
-          ...task,
+          title: task.title,
+          description: task.description,
           due_date: newDueDate,
+          priority: task.priority,
           is_open: true,
-          parent_task_id: task.task_id,
+          assignee_id: task.assignee_id,
+          recurrence: task.recurrence,
+          order: task.order,
         };
-        delete newTask.task_id;
 
         const { data: newTaskData, error: newTaskError } = await supabase
           .from("task")
@@ -189,7 +206,7 @@ const TaskList: React.FC<TaskListProps> = ({
         if (newTaskError) {
           console.error("Error creating recurring task:", newTaskError);
         } else if (newTaskData) {
-          setTasks([...tasks, newTaskData[0]]);
+          setTasks((prevTasks) => [...prevTasks, newTaskData[0]]);
         }
       }
     }
