@@ -10,7 +10,17 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { RoughNotation } from "react-rough-notation";
 import { Task } from "@/types/task";
-import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+import {
+  addDays,
+  addWeeks,
+  addMonths,
+  addYears,
+  isToday,
+  isTomorrow,
+  isYesterday,
+  format,
+  isBefore,
+} from "date-fns";
 
 interface TaskListProps {
   tasks: Task[];
@@ -25,6 +35,14 @@ interface TaskItemProps {
   onToggleStatus: (id: string | number) => void;
   moveTask: (dragIndex: number, hoverIndex: number) => void;
 }
+
+const formatDueDate = (dueDate: string): string => {
+  const date = new Date(dueDate);
+  if (isToday(date)) return "Today";
+  if (isTomorrow(date)) return "Tomorrow";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "MMM d, yyyy");
+};
 
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
@@ -73,6 +91,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
     return () => clearTimeout(timer);
   }, [task.is_open]);
 
+  const isPastDue =
+    task.due_date &&
+    isBefore(new Date(task.due_date), new Date()) &&
+    task.is_open;
+
   return (
     <div
       ref={(node) => drag(drop(node))}
@@ -107,10 +130,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
                   className={`ml-2 text-sm ${
                     !task.is_open
                       ? "text-gray-400"
-                      : "text-blue-500 bg-blue-100 px-2 py-1 rounded"
-                  }`}
+                      : isPastDue
+                      ? "text-red-500 bg-red-100"
+                      : "text-blue-500 bg-blue-100"
+                  } px-2 py-1 rounded`}
                 >
-                  {new Date(task.due_date).toLocaleDateString()}
+                  {formatDueDate(task.due_date)}
                   {task.recurrence && task.recurrence !== "none" && (
                     <RepeatIcon className="inline-block ml-1 w-4 h-4" />
                   )}
