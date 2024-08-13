@@ -1,19 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Task } from "@/types/task";
+import { PrioritySelect } from "@/components/PrioritySelect";
+import { RecurrenceSelect } from "@/components/RecurrenceSelect";
+import { AssigneeSelect } from "@/components/AssigneeSelect";
 
 interface AddTaskFormProps {
   members?: Array<{ member_id: number; first_name: string; last_name: string }>;
@@ -125,16 +121,7 @@ export default function AddTaskForm({
           control={control}
           rules={{ required: "Priority is required" }}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectContent>
-            </Select>
+            <PrioritySelect value={field.value} onChange={field.onChange} />
           )}
         />
       )}
@@ -143,18 +130,7 @@ export default function AddTaskForm({
         name="recurrence"
         control={control}
         render={({ field }) => (
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select recurrence" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
+          <RecurrenceSelect value={field.value} onChange={field.onChange} />
         )}
       />
 
@@ -164,21 +140,11 @@ export default function AddTaskForm({
           control={control}
           rules={{ required: "Assignee is required" }}
           render={({ field }) => (
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select assignee" />
-              </SelectTrigger>
-              <SelectContent>
-                {members.map((member) => (
-                  <SelectItem
-                    key={member.member_id}
-                    value={member.member_id.toString()}
-                  >
-                    {member.first_name} {member.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AssigneeSelect
+              value={field.value}
+              onChange={field.onChange}
+              members={members}
+            />
           )}
         />
       )}
