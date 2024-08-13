@@ -2,171 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Trash2, RepeatIcon } from "lucide-react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { RoughNotation } from "react-rough-notation";
 import { Task } from "@/types/task";
-import {
-  addDays,
-  addWeeks,
-  addMonths,
-  addYears,
-  isToday,
-  isTomorrow,
-  isYesterday,
-  format,
-  isBefore,
-} from "date-fns";
+import { TaskItem } from "@/components/TaskItem";
+import { EditTaskForm } from "@/components/EditTaskForm";
+import { toast } from "sonner";
 
 interface TaskListProps {
   tasks: Task[];
   memberId: number;
 }
-
-interface TaskItemProps {
-  task: Task;
-  index: number;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string | number) => void;
-  onToggleStatus: (id: string | number) => void;
-  moveTask: (dragIndex: number, hoverIndex: number) => void;
-}
-
-const formatDueDate = (dueDate: string): string => {
-  const date = new Date(dueDate);
-  if (isToday(date)) return "Today";
-  if (isTomorrow(date)) return "Tomorrow";
-  if (isYesterday(date)) return "Yesterday";
-  return format(date, "MMM d, yyyy");
-};
-
-const TaskItem: React.FC<TaskItemProps> = ({
-  task,
-  index,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-  moveTask,
-}) => {
-  const [isMoving, setIsMoving] = useState(false);
-  const [showStrikethrough, setShowStrikethrough] = useState(!task.is_open);
-
-  const [{ isDragging }, drag] = useDrag({
-    type: "TASK",
-    item: { id: task.task_id, index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  const [, drop] = useDrop({
-    accept: "TASK",
-    hover(item: { id: string | number; index: number }, monitor) {
-      if (!drag) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = index;
-
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      moveTask(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-  });
-
-  useEffect(() => {
-    setIsMoving(true);
-    const timer = setTimeout(() => {
-      setIsMoving(false);
-      setShowStrikethrough(!task.is_open);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [task.is_open]);
-
-  const isPastDue =
-    task.due_date &&
-    isBefore(new Date(task.due_date), new Date()) &&
-    task.is_open;
-
-  return (
-    <div
-      ref={(node) => drag(drop(node))}
-      className={`bg-white p-4 rounded shadow mb-2 ${
-        isDragging ? "opacity-50" : ""
-      } transition-all duration-300 ease-in-out`}
-      onDoubleClick={() => onEdit(task)}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Checkbox
-            checked={!task.is_open}
-            onCheckedChange={() => onToggleStatus(task.task_id)}
-          />
-          <div>
-            <div className="flex items-center">
-              <RoughNotation
-                type="strike-through"
-                show={!isMoving && showStrikethrough}
-                color="red"
-              >
-                <h3
-                  className={`text-2xl font-medium ${
-                    !task.is_open ? "text-gray-500" : ""
-                  }`}
-                >
-                  {task.title}
-                </h3>
-              </RoughNotation>
-              {task.due_date && (
-                <span
-                  className={`ml-2 text-sm ${
-                    !task.is_open
-                      ? "text-gray-400"
-                      : isPastDue
-                      ? "text-red-500 bg-red-100"
-                      : "text-blue-500 bg-blue-100"
-                  } px-2 py-1 rounded`}
-                >
-                  {formatDueDate(task.due_date)}
-                  {task.recurrence && task.recurrence !== "none" && (
-                    <RepeatIcon className="inline-block ml-1 w-4 h-4" />
-                  )}
-                </span>
-              )}
-            </div>
-            {task.description && (
-              <p
-                className={`text-sm text-gray-600 ${
-                  !task.is_open ? "text-gray-400" : ""
-                }`}
-              >
-                {task.description}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Trash2
-            className={`h-6 w-6 cursor-pointer ${
-              !task.is_open
-                ? "text-gray-400"
-                : "text-red-500 hover:text-red-700"
-            }`}
-            onClick={() => onDelete(task.task_id)}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const TaskList: React.FC<TaskListProps> = ({
   tasks: initialTasks,
@@ -205,6 +51,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
     if (error) {
       console.error("Error updating task:", error);
+      toast.error("Failed to update task status");
     } else if (data) {
       setTasks(
         tasks.map((t) =>
@@ -212,7 +59,6 @@ const TaskList: React.FC<TaskListProps> = ({
         )
       );
 
-      // Create a new recurring task only when marking as complete
       if (!newStatus && task.recurrence && task.recurrence !== "none") {
         const newDueDate = calculateNextDueDate(task.due_date, task.recurrence);
         const newTask: Partial<Task> = {
@@ -233,8 +79,10 @@ const TaskList: React.FC<TaskListProps> = ({
 
         if (newTaskError) {
           console.error("Error creating recurring task:", newTaskError);
+          toast.error("Failed to create recurring task");
         } else if (newTaskData) {
-          setTasks((prevTasks) => [...prevTasks, newTaskData[0]]);
+          setTasks((prevTasks) => [...prevTasks, newTaskData[0] as Task]);
+          toast.success("Recurring task created");
         }
       }
     }
@@ -247,16 +95,21 @@ const TaskList: React.FC<TaskListProps> = ({
     const date = new Date(currentDueDate);
     switch (recurrence) {
       case "daily":
-        return addDays(date, 1).toISOString();
+        date.setDate(date.getDate() + 1);
+        break;
       case "weekly":
-        return addWeeks(date, 1).toISOString();
+        date.setDate(date.getDate() + 7);
+        break;
       case "monthly":
-        return addMonths(date, 1).toISOString();
+        date.setMonth(date.getMonth() + 1);
+        break;
       case "yearly":
-        return addYears(date, 1).toISOString();
+        date.setFullYear(date.getFullYear() + 1);
+        break;
       default:
         return currentDueDate;
     }
+    return date.toISOString().split("T")[0];
   };
 
   const startEditing = (task: Task) => {
@@ -285,6 +138,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
     if (error) {
       console.error("Error updating task:", error);
+      toast.error("Failed to update task");
     } else if (data) {
       setTasks(
         tasks.map((task) =>
@@ -300,6 +154,7 @@ const TaskList: React.FC<TaskListProps> = ({
         )
       );
       setEditingTask(null);
+      toast.success("Task updated successfully");
     }
   };
 
@@ -311,8 +166,10 @@ const TaskList: React.FC<TaskListProps> = ({
 
     if (error) {
       console.error("Error deleting task:", error);
+      toast.error("Failed to delete task");
     } else {
       setTasks(tasks.filter((task) => task.task_id !== taskId));
+      toast.success("Task deleted successfully");
     }
   };
 
@@ -338,6 +195,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
       if (error) {
         console.error("Error updating task order:", error);
+        toast.error("Failed to update task order");
       }
     }
   };
@@ -356,11 +214,9 @@ const TaskList: React.FC<TaskListProps> = ({
               <TaskItem
                 key={task.task_id}
                 task={task}
-                index={index}
                 onEdit={startEditing}
                 onDelete={deleteTask}
                 onToggleStatus={toggleTaskStatus}
-                moveTask={moveTask}
               />
             ))}
           </>
@@ -372,11 +228,9 @@ const TaskList: React.FC<TaskListProps> = ({
               <TaskItem
                 key={task.task_id}
                 task={task}
-                index={index}
                 onEdit={startEditing}
                 onDelete={deleteTask}
                 onToggleStatus={toggleTaskStatus}
-                moveTask={moveTask}
               />
             ))}
           </>
@@ -385,44 +239,20 @@ const TaskList: React.FC<TaskListProps> = ({
           <p className="text-center text-gray-500 mt-8">No tasks available.</p>
         )}
         {editingTask !== null && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded-lg w-96">
-              <h2 className="text-xl font-bold mb-4">Edit Task</h2>
-              <Input
-                value={editedDescription}
-                onChange={(e) => setEditedDescription(e.target.value)}
-                className="w-full mb-2"
-                placeholder="Task description"
-              />
-              <Input
-                value={editedTaskDescription}
-                onChange={(e) => setEditedTaskDescription(e.target.value)}
-                className="w-full mb-2"
-                placeholder="Task details (optional)"
-              />
-              <Input
-                type="date"
-                value={editedDueDate}
-                onChange={(e) => setEditedDueDate(e.target.value)}
-                className="w-full mb-2"
-              />
-              <Input
-                type="number"
-                min="1"
-                max="3"
-                value={editedPriority}
-                onChange={(e) => setEditedPriority(Number(e.target.value))}
-                className="w-full mb-2"
-                placeholder="Priority (1-3)"
-              />
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button onClick={() => saveEdit(editingTask)}>Save</Button>
-                <Button onClick={cancelEditing} variant="outline">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
+          <EditTaskForm
+            editedDescription={editedDescription}
+            editedTaskDescription={editedTaskDescription}
+            editedDueDate={editedDueDate}
+            editedPriority={editedPriority}
+            onDescriptionChange={(e) => setEditedDescription(e.target.value)}
+            onTaskDescriptionChange={(e) =>
+              setEditedTaskDescription(e.target.value)
+            }
+            onDueDateChange={(e) => setEditedDueDate(e.target.value)}
+            onPriorityChange={(e) => setEditedPriority(Number(e.target.value))}
+            onSave={() => saveEdit(editingTask)}
+            onCancel={cancelEditing}
+          />
         )}
       </div>
     </DndProvider>
