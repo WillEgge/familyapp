@@ -29,6 +29,10 @@ export function TaskItem({
     setShowStrikethrough(!task.is_open);
   }, [task.is_open]);
 
+  console.log("Task Due Date:", task.due_date);
+  const formattedDate = task.due_date ? formatDueDate(task.due_date) : "";
+  console.log("Formatted Date:", formattedDate);
+
   return (
     <div
       className="bg-white p-4 rounded shadow mb-2 transition-all duration-300 ease-in-out"
@@ -65,7 +69,7 @@ export function TaskItem({
                       : "text-blue-500 bg-blue-100"
                   } px-2 py-1 rounded`}
                 >
-                  {formatDueDate(task.due_date)}
+                  {formattedDate}
                   {task.recurrence && task.recurrence !== "none" && (
                     <RepeatIcon className="inline-block ml-1 w-4 h-4" />
                   )}
