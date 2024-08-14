@@ -4,7 +4,7 @@ import { Trash2, RepeatIcon } from "lucide-react";
 import { RoughNotation } from "react-rough-notation";
 import { Task } from "@/types/task";
 import { formatDueDate } from "@/utils/dateUtils";
-import { isBefore } from "date-fns";
+import { isBefore, isSameDay } from "date-fns";
 
 interface TaskItemProps {
   task: Task;
@@ -23,7 +23,11 @@ export function TaskItem({
   const isPastDue =
     task.due_date &&
     isBefore(new Date(task.due_date), new Date()) &&
+    !isSameDay(new Date(task.due_date), new Date()) &&
     task.is_open;
+
+  const isToday =
+    task.due_date && isSameDay(new Date(task.due_date), new Date());
 
   useEffect(() => {
     setShowStrikethrough(!task.is_open);
@@ -64,6 +68,8 @@ export function TaskItem({
                   className={`ml-2 text-sm ${
                     !task.is_open
                       ? "text-gray-400"
+                      : isToday
+                      ? "text-grey-500"
                       : isPastDue
                       ? "text-red-500 bg-red-100"
                       : "text-blue-500 bg-blue-100"
