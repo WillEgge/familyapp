@@ -24,6 +24,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   const [editedDueDate, setEditedDueDate] = useState("");
   const [editedPriority, setEditedPriority] = useState<number>(2);
   const [editedTaskDescription, setEditedTaskDescription] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
@@ -34,6 +35,16 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
       setDoneTasks(done);
     }
   }, [tasks]);
+
+  useEffect(() => {
+    // This effect will trigger a re-render after a short delay
+    if (refreshTrigger > 0) {
+      const timer = setTimeout(() => {
+        setRefreshTrigger(0);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [refreshTrigger]);
 
   const toggleTaskStatus = async (taskId: string | number) => {
     const task = tasks.find((t) => t.task_id === taskId);
@@ -58,6 +69,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
           t.task_id === taskId ? { ...t, is_open: newStatus } : t
         )
       );
+      setRefreshTrigger((prev) => prev + 1);
 
       if (!newStatus && task.recurrence && task.recurrence !== "none") {
         const newDueDate = calculateNextDueDate(task.due_date, task.recurrence);
@@ -82,6 +94,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
           toast.error("Failed to create recurring task");
         } else if (newTaskData) {
           setTasks((prevTasks) => [...prevTasks, newTaskData[0] as Task]);
+          setRefreshTrigger((prev) => prev + 1);
           toast.success("Recurring task created");
         }
       }
@@ -154,6 +167,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
         )
       );
       setEditingTask(null);
+      setRefreshTrigger((prev) => prev + 1);
       toast.success("Task updated successfully");
     }
   };
@@ -169,6 +183,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
       toast.error("Failed to delete task");
     } else {
       setTasks(tasks.filter((task) => task.task_id !== taskId));
+      setRefreshTrigger((prev) => prev + 1);
       toast.success("Task deleted successfully");
     }
   };
@@ -179,6 +194,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
     newTasks.splice(dragIndex, 1);
     newTasks.splice(hoverIndex, 0, draggedTask);
     setTasks(newTasks);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const updateTaskOrder = async () => {
@@ -208,18 +224,19 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
 
   const handleTaskAdded = (newTask: Task) => {
     setTasks((prevTasks) => [...prevTasks, newTask]);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div>
+      <div key={refreshTrigger}>
         <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
         {todoTasks.length > 0 && (
           <>
             <h2 className="text-xl font-bold mb-4">Todo</h2>
             {todoTasks.map((task, index) => (
               <TaskItem
-                key={task.task_id}
+                key={`${task.task_id}-${refreshTrigger}`}
                 task={task}
                 onEdit={startEditing}
                 onDelete={deleteTask}
@@ -233,7 +250,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
             <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
             {doneTasks.map((task, index) => (
               <TaskItem
-                key={task.task_id}
+                key={`${task.task_id}-${refreshTrigger}`}
                 task={task}
                 onEdit={startEditing}
                 onDelete={deleteTask}
