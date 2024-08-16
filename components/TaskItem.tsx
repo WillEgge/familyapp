@@ -4,7 +4,7 @@ import { Trash2, RepeatIcon } from "lucide-react";
 import { RoughNotation } from "react-rough-notation";
 import { Task } from "@/types/task";
 import { formatDueDate } from "@/utils/dateUtils";
-import { isBefore, isSameDay } from "date-fns";
+import { isToday, isTomorrow, isPast, parseISO } from "date-fns";
 
 interface TaskItemProps {
   task: Task;
@@ -20,22 +20,22 @@ export function TaskItem({
   onToggleStatus,
 }: TaskItemProps) {
   const [showStrikethrough, setShowStrikethrough] = useState(!task.is_open);
-  const isPastDue =
-    task.due_date &&
-    isBefore(new Date(task.due_date), new Date()) &&
-    !isSameDay(new Date(task.due_date), new Date()) &&
-    task.is_open;
-
-  const isToday =
-    task.due_date && isSameDay(new Date(task.due_date), new Date());
 
   useEffect(() => {
     setShowStrikethrough(!task.is_open);
   }, [task.is_open]);
 
-  console.log("Task Due Date:", task.due_date);
+  const getDueDateColor = (dueDate: string): string => {
+    const date = parseISO(dueDate);
+    if (isToday(date)) return "text-gray-500 bg-gray-100";
+    if (isTomorrow(date) || date > new Date())
+      return "text-blue-500 bg-blue-100";
+    if (isPast(date)) return "text-red-500 bg-red-100";
+    return "text-gray-500 bg-gray-100"; // fallback, should not occur
+  };
+
   const formattedDate = task.due_date ? formatDueDate(task.due_date) : "";
-  console.log("Formatted Date:", formattedDate);
+  const dueDateColor = task.due_date ? getDueDateColor(task.due_date) : "";
 
   return (
     <div
@@ -66,13 +66,7 @@ export function TaskItem({
               {task.due_date && (
                 <span
                   className={`ml-2 text-sm ${
-                    !task.is_open
-                      ? "text-gray-400"
-                      : isToday
-                      ? "text-grey-500"
-                      : isPastDue
-                      ? "text-red-500 bg-red-100"
-                      : "text-blue-500 bg-blue-100"
+                    !task.is_open ? "text-gray-400" : dueDateColor
                   } px-2 py-1 rounded`}
                 >
                   {formattedDate}
