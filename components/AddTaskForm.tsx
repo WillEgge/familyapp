@@ -15,6 +15,7 @@ interface AddTaskFormProps {
   members?: Array<{ member_id: number; first_name: string; last_name: string }>;
   memberId?: number;
   hidePriority?: boolean;
+  onTaskAdded: (newTask: Task) => void;
 }
 
 const priorityMapping = {
@@ -27,6 +28,7 @@ export default function AddTaskForm({
   members,
   memberId,
   hidePriority = false,
+  onTaskAdded,
 }: AddTaskFormProps) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -77,14 +79,19 @@ export default function AddTaskForm({
       newTask.description = data.description;
     }
 
-    const { error } = await supabase.from("task").insert([newTask]);
+    const { data: insertedTask, error } = await supabase
+      .from("task")
+      .insert([newTask])
+      .select()
+      .single();
 
     if (error) {
       console.error("Error adding task:", error);
       toast.error("Failed to add task. Please try again.");
-    } else {
+    } else if (insertedTask) {
       reset();
       toast.success("Task added successfully!");
+      onTaskAdded(insertedTask as Task);
     }
     setIsSubmitting(false);
   };
