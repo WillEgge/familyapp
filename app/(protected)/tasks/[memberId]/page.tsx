@@ -1,7 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import dynamic from "next/dynamic";
-import AddTaskForm from "@/components/AddTaskForm";
 import { Task } from "@/types/task";
 
 const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
@@ -53,10 +52,7 @@ export default async function MemberTasks({
         <h1 className="text-4xl font-bold mb-8">
           Tasks for {member.first_name} {member.last_name}
         </h1>
-        <AddTaskForm memberId={memberId} hidePriority={true} />
-        <div className="bg-gray-100 p-4 rounded-md">
-          <TaskList tasks={tasks as Task[]} memberId={memberId} />
-        </div>
+        <TaskList initialTasks={tasks as Task[]} memberId={memberId} />
       </div>
     </div>
   );
