@@ -8,17 +8,15 @@ import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
 import { EditTaskForm } from "@/components/EditTaskForm";
 import { toast } from "sonner";
+import AddTaskForm from "@/components/AddTaskForm";
 
 interface TaskListProps {
-  tasks: Task[];
+  initialTasks: Task[];
   memberId: number;
 }
 
-const TaskList: React.FC<TaskListProps> = ({
-  tasks: initialTasks,
-  memberId,
-}) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
   const [todoTasks, setTodoTasks] = useState<Task[]>([]);
   const [doneTasks, setDoneTasks] = useState<Task[]>([]);
   const [editingTask, setEditingTask] = useState<string | number | null>(null);
@@ -29,10 +27,12 @@ const TaskList: React.FC<TaskListProps> = ({
   const supabase = createClient();
 
   useEffect(() => {
-    const todo = tasks.filter((task) => task.is_open);
-    const done = tasks.filter((task) => !task.is_open);
-    setTodoTasks(todo);
-    setDoneTasks(done);
+    if (Array.isArray(tasks)) {
+      const todo = tasks.filter((task) => task.is_open);
+      const done = tasks.filter((task) => !task.is_open);
+      setTodoTasks(todo);
+      setDoneTasks(done);
+    }
   }, [tasks]);
 
   const toggleTaskStatus = async (taskId: string | number) => {
@@ -201,12 +201,19 @@ const TaskList: React.FC<TaskListProps> = ({
   };
 
   useEffect(() => {
-    updateTaskOrder();
+    if (Array.isArray(tasks) && tasks.length > 0) {
+      updateTaskOrder();
+    }
   }, [tasks]);
+
+  const handleTaskAdded = (newTask: Task) => {
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+  };
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div>
+        <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
         {todoTasks.length > 0 && (
           <>
             <h2 className="text-xl font-bold mb-4">Todo</h2>
