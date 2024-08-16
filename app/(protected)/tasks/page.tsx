@@ -7,7 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import AddTaskForm from "@/components/AddTaskForm";
 import { Task } from "@/types/task";
 
 const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
@@ -21,7 +20,6 @@ interface Member {
 }
 
 const fetchTasks = async (members: Member[]): Promise<Task[]> => {
-  const cookieStore = cookies();
   const supabase = createClient();
 
   const { data: tasks, error: tasksError } = await supabase
@@ -42,7 +40,6 @@ const fetchTasks = async (members: Member[]): Promise<Task[]> => {
 };
 
 export default async function TasksPage() {
-  const cookieStore = cookies();
   const supabase = createClient();
 
   const {
@@ -97,7 +94,6 @@ export default async function TasksPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Family Tasks</h1>
-      <AddTaskForm members={members} hidePriority={true} />
       <Accordion type="single" collapsible className="w-full mt-8">
         {members.map((member) => (
           <AccordionItem
