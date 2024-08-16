@@ -20,7 +20,7 @@ interface Member {
   house_id: string;
 }
 
-const fetchTasks = async (members: Member[]): Promise<Task[] | null> => {
+const fetchTasks = async (members: Member[]): Promise<Task[]> => {
   const cookieStore = cookies();
   const supabase = createClient();
 
@@ -35,7 +35,7 @@ const fetchTasks = async (members: Member[]): Promise<Task[] | null> => {
 
   if (tasksError) {
     console.error("Error fetching tasks:", tasksError);
-    return null;
+    return [];
   }
 
   return tasks as Task[];
@@ -83,10 +83,6 @@ export default async function TasksPage() {
 
   const tasks = await fetchTasks(members);
 
-  if (!tasks) {
-    return <div>Error loading tasks. Please try again later.</div>;
-  }
-
   const tasksByAssignee: { [key: number]: Task[] } = tasks.reduce(
     (acc, task) => {
       if (!acc[task.assignee_id]) {
@@ -114,7 +110,7 @@ export default async function TasksPage() {
             <AccordionContent>
               <div className="bg-gray-100 p-4 rounded-md">
                 <TaskList
-                  tasks={tasksByAssignee[member.member_id] || []}
+                  initialTasks={tasksByAssignee[member.member_id] || []}
                   memberId={member.member_id}
                 />
               </div>
