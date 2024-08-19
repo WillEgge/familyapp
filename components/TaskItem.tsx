@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+// components/TaskItem.tsx
+
+import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, RepeatIcon } from "lucide-react";
-import { RoughNotation } from "react-rough-notation";
 import { Task } from "@/types/task";
 import { formatDueDate } from "@/utils/dateUtils";
 import { isToday, isTomorrow, isPast, parseISO } from "date-fns";
@@ -19,12 +20,6 @@ export function TaskItem({
   onDelete,
   onToggleStatus,
 }: TaskItemProps) {
-  const [showStrikethrough, setShowStrikethrough] = useState(!task.is_open);
-
-  useEffect(() => {
-    setShowStrikethrough(!task.is_open);
-  }, [task.is_open]);
-
   const getDueDateColor = (dueDate: string): string => {
     const date = parseISO(dueDate);
     if (isToday(date)) return "text-gray-500 bg-gray-100";
@@ -50,19 +45,13 @@ export function TaskItem({
           />
           <div>
             <div className="flex items-center">
-              <RoughNotation
-                type="strike-through"
-                show={showStrikethrough}
-                color="red"
+              <h3
+                className={`text-2xl font-medium ${
+                  !task.is_open ? "text-gray-500 line-through" : ""
+                }`}
               >
-                <h3
-                  className={`text-2xl font-medium ${
-                    !task.is_open ? "text-gray-500" : ""
-                  }`}
-                >
-                  {task.title}
-                </h3>
-              </RoughNotation>
+                {task.title}
+              </h3>
               {task.due_date && (
                 <span
                   className={`ml-2 text-sm ${
