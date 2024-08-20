@@ -80,6 +80,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   const [editedPriority, setEditedPriority] = useState<number>(2);
   const [editedTaskDescription, setEditedTaskDescription] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [lastDeletedTask, setLastDeletedTask] = useState<Task | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -267,6 +268,9 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   };
 
   const deleteTask = async (taskId: string | number) => {
+    const taskToDelete = tasks.find((task) => task.task_id === taskId);
+    if (!taskToDelete) return;
+
     const { error } = await supabase
       .from("task")
       .delete()
@@ -278,7 +282,29 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
     } else {
       setTasks(tasks.filter((task) => task.task_id !== taskId));
       setRefreshTrigger((prev) => prev + 1);
-      toast.success("Task deleted successfully");
+      setLastDeletedTask(taskToDelete);
+      toast.success("Task deleted successfully", {
+        action: {
+          label: "Undo",
+          onClick: () => undoDelete(taskToDelete),
+        },
+      });
+    }
+  };
+
+  const undoDelete = async (deletedTask: Task) => {
+    const { data, error } = await supabase
+      .from("task")
+      .insert([deletedTask])
+      .select();
+
+    if (error) {
+      console.error("Error undoing task deletion:", error);
+      toast.error("Failed to undo task deletion");
+    } else if (data) {
+      setTasks((prevTasks) => [...prevTasks, data[0] as Task]);
+      setRefreshTrigger((prev) => prev + 1);
+      toast.success("Task restored successfully");
     }
   };
 
