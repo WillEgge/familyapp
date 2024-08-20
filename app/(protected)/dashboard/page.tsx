@@ -1,7 +1,17 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+interface FamilyMember {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  avatar_color?: string;
+  is_primary: boolean;
+  active: boolean;
+}
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -14,7 +24,6 @@ export default async function Dashboard() {
     redirect("/signin");
   }
 
-  // Fetch the current user's house_id
   const { data: currentMember, error: currentMemberError } = await supabase
     .from("member")
     .select("house_id")
@@ -26,11 +35,11 @@ export default async function Dashboard() {
     return <div>Error loading user information. Please try again later.</div>;
   }
 
-  // Fetch all family members
   const { data: familyMembers, error: familyMembersError } = await supabase
     .from("member")
     .select("*")
     .eq("house_id", currentMember.house_id)
+    .eq("active", true)
     .order("first_name");
 
   if (familyMembersError) {
@@ -43,7 +52,7 @@ export default async function Dashboard() {
       <div className="w-full max-w-4xl flex justify-center items-center flex-col gap-8 mt-16">
         <h1 className="text-4xl font-bold">Family Dashboard</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {familyMembers.map((member) => (
+          {familyMembers.map((member: FamilyMember) => (
             <Link
               key={member.member_id}
               href={`/tasks/${member.member_id}`}
