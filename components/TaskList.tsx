@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { DndProvider } from "react-dnd";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
@@ -14,6 +14,61 @@ interface TaskListProps {
   initialTasks: Task[];
   memberId: number;
 }
+
+interface DraggableTaskItemProps {
+  task: Task;
+  index: number;
+  moveTask: (dragIndex: number, hoverIndex: number, isOpen: boolean) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string | number) => void;
+  onToggleStatus: (id: string | number) => void;
+}
+
+const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
+  task,
+  index,
+  moveTask,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+}) => {
+  const [{ isDragging }, drag] = useDrag({
+    type: task.is_open ? "TODO_TASK" : "DONE_TASK",
+    item: { id: task.task_id, index, isOpen: task.is_open },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  const [, drop] = useDrop({
+    accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
+    hover: (
+      item: { id: string | number; index: number; isOpen: boolean },
+      monitor
+    ) => {
+      if (!item || item.id === task.task_id) {
+        return;
+      }
+      moveTask(item.index, index, item.isOpen);
+      item.index = index;
+    },
+  });
+
+  return (
+    <div
+      ref={(node) => drag(drop(node))}
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
+      <TaskItem
+        key={`${task.task_id}-${task.is_open}`}
+        task={task}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onToggleStatus={onToggleStatus}
+      />
+    </div>
+  );
+};
 
 const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
@@ -29,15 +84,18 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
 
   useEffect(() => {
     if (Array.isArray(tasks)) {
-      const todo = tasks.filter((task) => task.is_open);
-      const done = tasks.filter((task) => !task.is_open);
+      const todo = tasks
+        .filter((task) => task.is_open)
+        .sort((a, b) => a.order - b.order);
+      const done = tasks
+        .filter((task) => !task.is_open)
+        .sort((a, b) => a.order - b.order);
       setTodoTasks(todo);
       setDoneTasks(done);
     }
   }, [tasks]);
 
   useEffect(() => {
-    // This effect will trigger a re-render after a short delay
     if (refreshTrigger > 0) {
       const timer = setTimeout(() => {
         setRefreshTrigger(0);
@@ -45,6 +103,42 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
       return () => clearTimeout(timer);
     }
   }, [refreshTrigger]);
+
+  const moveTask = async (
+    dragIndex: number,
+    hoverIndex: number,
+    isOpen: boolean
+  ) => {
+    const taskList = isOpen ? todoTasks : doneTasks;
+    const reorderedTasks = [...taskList];
+    const [movedTask] = reorderedTasks.splice(dragIndex, 1);
+    reorderedTasks.splice(hoverIndex, 0, movedTask);
+
+    if (isOpen) {
+      setTodoTasks(reorderedTasks);
+    } else {
+      setDoneTasks(reorderedTasks);
+    }
+
+    const updates = reorderedTasks.map((task, index) => ({
+      task_id: task.task_id,
+      order: index,
+    }));
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("task")
+        .update({ order: update.order })
+        .eq("task_id", update.task_id);
+
+      if (error) {
+        console.error("Error updating task order:", error);
+        toast.error("Failed to update task order");
+      }
+    }
+
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   const toggleTaskStatus = async (taskId: string | number) => {
     const task = tasks.find((t) => t.task_id === taskId);
@@ -188,40 +282,6 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
     }
   };
 
-  const moveTask = (dragIndex: number, hoverIndex: number) => {
-    const draggedTask = tasks[dragIndex];
-    const newTasks = [...tasks];
-    newTasks.splice(dragIndex, 1);
-    newTasks.splice(hoverIndex, 0, draggedTask);
-    setTasks(newTasks);
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
-  const updateTaskOrder = async () => {
-    const updates = tasks.map((task, index) => ({
-      task_id: task.task_id,
-      order: index,
-    }));
-
-    for (const update of updates) {
-      const { error } = await supabase
-        .from("task")
-        .update({ order: update.order })
-        .eq("task_id", update.task_id);
-
-      if (error) {
-        console.error("Error updating task order:", error);
-        toast.error("Failed to update task order");
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (Array.isArray(tasks) && tasks.length > 0) {
-      updateTaskOrder();
-    }
-  }, [tasks]);
-
   const handleTaskAdded = (newTask: Task) => {
     setTasks((prevTasks) => [...prevTasks, newTask]);
     setRefreshTrigger((prev) => prev + 1);
@@ -235,9 +295,11 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
           <>
             <h2 className="text-xl font-bold mb-4">Todo</h2>
             {todoTasks.map((task, index) => (
-              <TaskItem
-                key={`${task.task_id}-${refreshTrigger}`}
+              <DraggableTaskItem
+                key={`${task.task_id}-${task.is_open}`}
                 task={task}
+                index={index}
+                moveTask={moveTask}
                 onEdit={startEditing}
                 onDelete={deleteTask}
                 onToggleStatus={toggleTaskStatus}
@@ -249,9 +311,11 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
           <>
             <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
             {doneTasks.map((task, index) => (
-              <TaskItem
-                key={`${task.task_id}-${refreshTrigger}`}
+              <DraggableTaskItem
+                key={`${task.task_id}-${task.is_open}`}
                 task={task}
+                index={index}
+                moveTask={moveTask}
                 onEdit={startEditing}
                 onDelete={deleteTask}
                 onToggleStatus={toggleTaskStatus}
