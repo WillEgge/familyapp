@@ -6,6 +6,7 @@ import AddMemberForm from "@/components/AddMemberForm";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,6 +79,49 @@ export default function FamilyMemberManager({
     }
   };
 
+  const updateMemberName = async (
+    memberId: number,
+    firstName: string,
+    lastName: string
+  ) => {
+    const { data, error } = await supabase
+      .from("member")
+      .update({ first_name: firstName, last_name: lastName })
+      .eq("member_id", memberId)
+      .select();
+
+    if (error) {
+      console.error("Error updating member name:", error);
+      toast.error("Failed to update family member name");
+    } else if (data) {
+      setFamilyMembers(
+        familyMembers.map((member) =>
+          member.member_id === memberId
+            ? { ...member, first_name: firstName, last_name: lastName }
+            : member
+        )
+      );
+      toast.success("Family member name updated successfully");
+    }
+  };
+
+  const deleteMember = async (memberId: number) => {
+    const { error } = await supabase
+      .from("member")
+      .delete()
+      .eq("member_id", memberId);
+
+    if (error) {
+      console.error("Error deleting member:", error);
+      toast.error("Failed to delete family member");
+    } else {
+      setFamilyMembers(
+        familyMembers.filter((member) => member.member_id !== memberId)
+      );
+      toast.success("Family member deleted successfully");
+    }
+  };
+
   const activeMembers = familyMembers.filter((member) => member.active);
   const inactiveMembers = familyMembers.filter((member) => !member.active);
 
@@ -102,6 +146,8 @@ export default function FamilyMemberManager({
               key={member.member_id}
               member={member}
               onStatusChange={toggleMemberStatus}
+              onNameChange={updateMemberName}
+              onDelete={deleteMember}
               actionText="Deactivate"
               actionVariant="destructive"
             />
@@ -116,6 +162,8 @@ export default function FamilyMemberManager({
               key={member.member_id}
               member={member}
               onStatusChange={toggleMemberStatus}
+              onNameChange={updateMemberName}
+              onDelete={deleteMember}
               actionText="Reactivate"
               actionVariant="default"
             />
@@ -129,6 +177,12 @@ export default function FamilyMemberManager({
 interface MemberItemProps {
   member: FamilyMember;
   onStatusChange: (memberId: number, newStatus: boolean) => Promise<void>;
+  onNameChange: (
+    memberId: number,
+    firstName: string,
+    lastName: string
+  ) => Promise<void>;
+  onDelete: (memberId: number) => Promise<void>;
   actionText: string;
   actionVariant: "default" | "destructive";
 }
@@ -136,9 +190,26 @@ interface MemberItemProps {
 function MemberItem({
   member,
   onStatusChange,
+  onNameChange,
+  onDelete,
   actionText,
   actionVariant,
 }: MemberItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [firstName, setFirstName] = useState(member.first_name);
+  const [lastName, setLastName] = useState(member.last_name);
+
+  const handleDoubleClick = () => {
+    if (!member.is_primary) {
+      setIsEditing(true);
+    }
+  };
+
+  const handleNameSubmit = () => {
+    onNameChange(member.member_id, firstName, lastName);
+    setIsEditing(false);
+  };
+
   return (
     <div className="flex justify-between items-center mb-4 p-2 bg-gray-50 rounded-lg">
       <div className="flex items-center space-x-4">
@@ -150,38 +221,80 @@ function MemberItem({
             {member.last_name[0]}
           </AvatarFallback>
         </Avatar>
-        <span className="font-medium">
-          {member.first_name} {member.last_name}
-        </span>
+        {isEditing ? (
+          <div className="flex space-x-2">
+            <Input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-24"
+            />
+            <Input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-24"
+            />
+            <Button onClick={handleNameSubmit} size="sm">
+              Save
+            </Button>
+          </div>
+        ) : (
+          <span className="font-medium" onDoubleClick={handleDoubleClick}>
+            {member.first_name} {member.last_name}
+          </span>
+        )}
       </div>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant={actionVariant} size="sm">
-            {actionText}
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will {actionText.toLowerCase()} {member.first_name}{" "}
-              {member.last_name}.
-              {actionText === "Deactivate" &&
-                " They will be removed from the dashboard and deleted after 24 hours if not reactivated."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                onStatusChange(member.member_id, actionText === "Reactivate")
-              }
-            >
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <div className="flex space-x-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant={actionVariant} size="sm">
+              {actionText}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will {actionText.toLowerCase()} {member.first_name}{" "}
+                {member.last_name}.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() =>
+                  onStatusChange(member.member_id, actionText === "Reactivate")
+                }
+              >
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        {!member.active && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete {member.first_name}{" "}
+                  {member.last_name} from the family.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onDelete(member.member_id)}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
     </div>
   );
 }
