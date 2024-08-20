@@ -24,7 +24,7 @@ interface AddMemberFormProps {
   houseId: string;
   primaryUserEmail: string;
   primaryUserLastName: string;
-  onMemberAdded?: () => void;
+  onMemberAdded: (newMember: any) => void;
 }
 
 export default function AddMemberForm({
@@ -46,14 +46,17 @@ export default function AddMemberForm({
     try {
       console.log("Starting family member creation process");
 
-      // Generate a unique email for the family member
       const uniqueIdentifier =
         Date.now().toString(36) + Math.random().toString(36).substr(2);
       const generatedEmail = `${data.first_name.toLowerCase()}.${uniqueIdentifier}@family.${
         primaryUserEmail.split("@")[1]
       }`;
 
-      // Add the new member to the member table
+      // Generate a random avatar color
+      const avatarColor = `#${Math.floor(Math.random() * 16777215).toString(
+        16
+      )}`;
+
       const { data: memberData, error: memberError } = await supabase
         .from("member")
         .insert({
@@ -62,6 +65,8 @@ export default function AddMemberForm({
           email: generatedEmail,
           house_id: houseId,
           is_primary: false,
+          avatar_color: avatarColor,
+          active: true,
         })
         .select()
         .single();
@@ -75,10 +80,7 @@ export default function AddMemberForm({
       toast.success("Family member added successfully");
       form.reset();
 
-      // Call the onMemberAdded callback if provided
-      if (onMemberAdded) {
-        onMemberAdded();
-      }
+      onMemberAdded(memberData);
     } catch (error: unknown) {
       console.error("Full error object:", error);
       if (error instanceof Error) {
