@@ -1,6 +1,3 @@
-// app/signin/page.tsx
-
-import Link from "next/link";
 import { SignInForm } from "./SignInForm";
 
 export default function SignIn({
