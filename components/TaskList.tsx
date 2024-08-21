@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { useDrag, useDrop } from "react-dnd";
 import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
 import { EditTaskForm } from "@/components/EditTaskForm";
@@ -32,7 +31,7 @@ const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
   onDelete,
   onToggleStatus,
 }) => {
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging }, drag, preview] = useDrag({
     type: task.is_open ? "TODO_TASK" : "DONE_TASK",
     item: { id: task.task_id, index, isOpen: task.is_open },
     collect: (monitor) => ({
@@ -56,16 +55,22 @@ const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
 
   return (
     <div
-      ref={(node) => drag(drop(node))}
-      style={{ opacity: isDragging ? 0.5 : 1 }}
+      ref={(node) => preview(drop(node))}
+      style={{
+        opacity: isDragging ? 0.5 : 1,
+        cursor: "move",
+        touchAction: "none", // Prevents scrolling while dragging on touch devices
+      }}
     >
-      <TaskItem
-        key={`${task.task_id}-${task.is_open}`}
-        task={task}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onToggleStatus={onToggleStatus}
-      />
+      <div ref={drag}>
+        <TaskItem
+          key={`${task.task_id}-${task.is_open}`}
+          task={task}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onToggleStatus={onToggleStatus}
+        />
+      </div>
     </div>
   );
 };
@@ -314,62 +319,60 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div key={refreshTrigger}>
-        <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
-        {todoTasks.length > 0 && (
-          <>
-            <h2 className="text-xl font-bold mb-4">Todo</h2>
-            {todoTasks.map((task, index) => (
-              <DraggableTaskItem
-                key={`${task.task_id}-${task.is_open}`}
-                task={task}
-                index={index}
-                moveTask={moveTask}
-                onEdit={startEditing}
-                onDelete={deleteTask}
-                onToggleStatus={toggleTaskStatus}
-              />
-            ))}
-          </>
-        )}
-        {doneTasks.length > 0 && (
-          <>
-            <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
-            {doneTasks.map((task, index) => (
-              <DraggableTaskItem
-                key={`${task.task_id}-${task.is_open}`}
-                task={task}
-                index={index}
-                moveTask={moveTask}
-                onEdit={startEditing}
-                onDelete={deleteTask}
-                onToggleStatus={toggleTaskStatus}
-              />
-            ))}
-          </>
-        )}
-        {todoTasks.length === 0 && doneTasks.length === 0 && (
-          <p className="text-center text-gray-500 mt-8">No tasks available.</p>
-        )}
-        {editingTask !== null && (
-          <EditTaskForm
-            editedDescription={editedDescription}
-            editedTaskDescription={editedTaskDescription}
-            editedDueDate={editedDueDate}
-            editedPriority={editedPriority}
-            onDescriptionChange={(e) => setEditedDescription(e.target.value)}
-            onTaskDescriptionChange={(e) =>
-              setEditedTaskDescription(e.target.value)
-            }
-            onDueDateChange={(e) => setEditedDueDate(e.target.value)}
-            onPriorityChange={(e) => setEditedPriority(Number(e.target.value))}
-            onSave={() => saveEdit(editingTask)}
-            onCancel={cancelEditing}
-          />
-        )}
-      </div>
-    </DndProvider>
+    <div key={refreshTrigger}>
+      <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
+      {todoTasks.length > 0 && (
+        <>
+          <h2 className="text-xl font-bold mb-4">Todo</h2>
+          {todoTasks.map((task, index) => (
+            <DraggableTaskItem
+              key={`${task.task_id}-${task.is_open}`}
+              task={task}
+              index={index}
+              moveTask={moveTask}
+              onEdit={startEditing}
+              onDelete={deleteTask}
+              onToggleStatus={toggleTaskStatus}
+            />
+          ))}
+        </>
+      )}
+      {doneTasks.length > 0 && (
+        <>
+          <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
+          {doneTasks.map((task, index) => (
+            <DraggableTaskItem
+              key={`${task.task_id}-${task.is_open}`}
+              task={task}
+              index={index}
+              moveTask={moveTask}
+              onEdit={startEditing}
+              onDelete={deleteTask}
+              onToggleStatus={toggleTaskStatus}
+            />
+          ))}
+        </>
+      )}
+      {todoTasks.length === 0 && doneTasks.length === 0 && (
+        <p className="text-center text-gray-500 mt-8">No tasks available.</p>
+      )}
+      {editingTask !== null && (
+        <EditTaskForm
+          editedDescription={editedDescription}
+          editedTaskDescription={editedTaskDescription}
+          editedDueDate={editedDueDate}
+          editedPriority={editedPriority}
+          onDescriptionChange={(e) => setEditedDescription(e.target.value)}
+          onTaskDescriptionChange={(e) =>
+            setEditedTaskDescription(e.target.value)
+          }
+          onDueDateChange={(e) => setEditedDueDate(e.target.value)}
+          onPriorityChange={(e) => setEditedPriority(Number(e.target.value))}
+          onSave={() => saveEdit(editingTask)}
+          onCancel={cancelEditing}
+        />
+      )}
+    </div>
   );
 };
 
