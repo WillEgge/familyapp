@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { signOut } from "@/app/(auth)/signin/actions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -29,6 +28,7 @@ interface AvatarData {
 
 export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
   const [avatarData, setAvatarData] = useState<AvatarData | null>(null);
   const [userName, setUserName] = useState<string>("");
@@ -37,12 +37,15 @@ export function SideNav({ isOpen, closeSidebar }: SideNavProps) {
   const navItems = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/tasks", label: "Tasks" },
-    { href: "/calendar", label: "Calendar" },
   ];
 
   const handleSignOut = async () => {
-    await signOut();
-    window.location.reload();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error);
+    } else {
+      router.push("/signin");
+    }
   };
 
   useEffect(() => {
