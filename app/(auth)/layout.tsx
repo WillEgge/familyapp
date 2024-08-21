@@ -8,7 +8,7 @@ export default function AuthLayout({
   return (
     <>
       <Header />
-      <main className="p-4">{children}</main>
+      <main className="h-[calc(100vh-64px)]">{children}</main>
     </>
   );
 }
