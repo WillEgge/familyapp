@@ -18,7 +18,7 @@ export default async function Dashboard() {
 
   const { data: currentMember, error: currentMemberError } = await supabase
     .from("member")
-    .select("house_id")
+    .select("house_id, is_primary")
     .eq("email", user.email)
     .single();
 
@@ -58,7 +58,10 @@ export default async function Dashboard() {
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <div className="w-full max-w-4xl flex justify-center items-center flex-col gap-8 mt-16">
         <h1 className="text-4xl font-bold">Family Dashboard</h1>
-        <FamilyMembersList familyMembers={familyMembers} />
+        <FamilyMembersList
+          familyMembers={familyMembers}
+          isPrimaryMember={currentMember.is_primary}
+        />
       </div>
     </div>
   );
