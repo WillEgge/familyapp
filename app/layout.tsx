@@ -1,10 +1,7 @@
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
-import Header from "@/components/Header";
-import { LayoutWrapper } from "@/components/LayoutWrapper";
-import Footer from "@/components/Footer";
-import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/utils/supabase/server";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function RootLayout({
   children,
@@ -19,15 +16,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={GeistSans.className}>
       <body className="bg-background text-foreground">
-        {user ? (
-          <LayoutWrapper>{children}</LayoutWrapper>
-        ) : (
-          <>
-            <Header />
-            <main className="p-4">{children}</main>
-          </>
-        )}
-        <Footer />
+        {children}
         <Toaster />
       </body>
     </html>
