@@ -6,7 +6,7 @@ export default function SignUp({
   searchParams: { message?: string };
 }) {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
       <SignUpForm searchParams={searchParams} />
     </div>
   );
