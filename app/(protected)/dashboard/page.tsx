@@ -1,17 +1,9 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-interface FamilyMember {
-  member_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  avatar_color?: string;
-  is_primary: boolean;
-  active: boolean;
-}
+import {
+  FamilyMembersList,
+  FamilyMember,
+} from "@/components/FamilyMembersList";
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -35,9 +27,14 @@ export default async function Dashboard() {
     return <div>Error loading user information. Please try again later.</div>;
   }
 
-  const { data: familyMembers, error: familyMembersError } = await supabase
+  const { data: familyMembersData, error: familyMembersError } = await supabase
     .from("member")
-    .select("*")
+    .select(
+      `
+      *,
+      tasks:task(*)
+    `
+    )
     .eq("house_id", currentMember.house_id)
     .eq("active", true)
     .order("first_name");
@@ -47,36 +44,21 @@ export default async function Dashboard() {
     return <div>Error loading family members. Please try again later.</div>;
   }
 
+  const familyMembers: FamilyMember[] = familyMembersData.map((member: any) => {
+    const todoCount = member.tasks.filter((task: any) => task.is_open).length;
+    const doneCount = member.tasks.filter((task: any) => !task.is_open).length;
+    return {
+      ...member,
+      todo_count: todoCount,
+      done_count: doneCount,
+    };
+  });
+
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <div className="w-full max-w-4xl flex justify-center items-center flex-col gap-8 mt-16">
         <h1 className="text-4xl font-bold">Family Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {familyMembers.map((member: FamilyMember) => (
-            <Link
-              key={member.member_id}
-              href={`/tasks/${member.member_id}`}
-              className="p-4 border rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-4"
-            >
-              <Avatar className="h-12 w-12">
-                <AvatarFallback
-                  style={{ backgroundColor: member.avatar_color }}
-                >
-                  {member.first_name[0]}
-                  {member.last_name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-xl font-semibold">
-                  {member.first_name} {member.last_name}
-                </h2>
-                <p className="text-gray-600">
-                  {member.is_primary ? "Primary Member" : "Family Member"}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <FamilyMembersList familyMembers={familyMembers} />
       </div>
     </div>
   );
