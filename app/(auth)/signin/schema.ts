@@ -1,5 +1,3 @@
-// app/signin/schema.ts
-
 import { z } from "zod";
 
 export const signInSchema = z.object({
