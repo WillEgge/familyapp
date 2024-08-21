@@ -42,7 +42,6 @@ export function SignInForm({ searchParams }: SignInFormProps) {
     try {
       const result = await signInProcess(data);
       if (result.success) {
-        // Use the router to redirect on the client side
         router.push(result.redirectTo);
       } else {
         setServerError(result.error);
@@ -57,7 +56,7 @@ export function SignInForm({ searchParams }: SignInFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
+        className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200"
       >
         <h2 className="text-2xl font-bold mb-6 text-center text-indigo-600">
           Sign In
