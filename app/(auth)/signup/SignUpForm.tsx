@@ -58,7 +58,7 @@ export function SignUpForm({ searchParams }: SignUpFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
+        className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-200"
       >
         <h2 className="text-2xl font-bold mb-6 text-center text-indigo-600">
           Sign Up
