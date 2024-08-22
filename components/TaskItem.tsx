@@ -1,5 +1,3 @@
-// components/TaskItem.tsx
-
 import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, RepeatIcon } from "lucide-react";
@@ -46,7 +44,7 @@ export function TaskItem({
           <div>
             <div className="flex items-center">
               <h3
-                className={`text-2xl font-medium ${
+                className={`text-lg font-medium ${
                   !task.is_open ? "text-gray-500 line-through" : ""
                 }`}
               >
