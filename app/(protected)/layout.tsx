@@ -1,9 +1,32 @@
-import { LayoutWrapper } from "@/components/LayoutWrapper";
+"use client";
 
-export default function ProtectedLayout({
+import { DndProvider } from "react-dnd";
+import { TouchBackend } from "react-dnd-touch-backend";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { useEffect, useState } from "react";
+
+const touchBackendOptions = {
+  enableMouseEvents: true,
+  delayTouchStart: 100, // in milliseconds
+};
+
+export default function TasksLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <LayoutWrapper>{children}</LayoutWrapper>;
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  return (
+    <DndProvider
+      backend={isTouchDevice ? TouchBackend : HTML5Backend}
+      options={isTouchDevice ? touchBackendOptions : undefined}
+    >
+      {children}
+    </DndProvider>
+  );
 }
