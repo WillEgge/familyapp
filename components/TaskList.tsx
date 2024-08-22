@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useDrag, useDrop } from "react-dnd";
+import { getEmptyImage } from "react-dnd-html5-backend";
 import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
 import { EditTaskForm } from "@/components/EditTaskForm";
@@ -31,46 +32,62 @@ const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
   onDelete,
   onToggleStatus,
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [{ handlerId }, drop] = useDrop({
+    accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId(),
+      };
+    },
+    hover(
+      item: { id: string | number; index: number; isOpen: boolean },
+      monitor
+    ) {
+      if (!ref.current) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      moveTask(dragIndex, hoverIndex, item.isOpen);
+      item.index = hoverIndex;
+    },
+  });
+
   const [{ isDragging }, drag, preview] = useDrag({
     type: task.is_open ? "TODO_TASK" : "DONE_TASK",
-    item: { id: task.task_id, index, isOpen: task.is_open },
+    item: () => {
+      return { id: task.task_id, index, isOpen: task.is_open };
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
-  const [, drop] = useDrop({
-    accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
-    hover: (
-      item: { id: string | number; index: number; isOpen: boolean },
-      monitor
-    ) => {
-      if (!item || item.id === task.task_id) {
-        return;
-      }
-      moveTask(item.index, index, item.isOpen);
-      item.index = index;
-    },
-  });
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+  }, [preview]);
+
+  drag(drop(ref));
 
   return (
     <div
-      ref={(node) => preview(drop(node))}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        cursor: "move",
-        touchAction: "none", // Prevents scrolling while dragging on touch devices
-      }}
+      ref={ref}
+      style={{ opacity: isDragging ? 0.5 : 1, touchAction: "none" }}
+      data-handler-id={handlerId}
     >
-      <div ref={drag}>
-        <TaskItem
-          key={`${task.task_id}-${task.is_open}`}
-          task={task}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onToggleStatus={onToggleStatus}
-        />
-      </div>
+      <TaskItem
+        key={`${task.task_id}-${task.is_open}`}
+        task={task}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onToggleStatus={onToggleStatus}
+      />
     </div>
   );
 };
