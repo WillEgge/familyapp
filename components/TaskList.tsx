@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { useDrag, useDrop } from "react-dnd";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { TouchBackend } from "react-dnd-touch-backend";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
@@ -23,74 +25,6 @@ interface DraggableTaskItemProps {
   onDelete: (id: string | number) => void;
   onToggleStatus: (id: string | number) => void;
 }
-
-const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
-  task,
-  index,
-  moveTask,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [{ handlerId }, drop] = useDrop({
-    accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
-    },
-    hover(
-      item: { id: string | number; index: number; isOpen: boolean },
-      monitor
-    ) {
-      if (!ref.current) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = index;
-
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      moveTask(dragIndex, hoverIndex, item.isOpen);
-      item.index = hoverIndex;
-    },
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: task.is_open ? "TODO_TASK" : "DONE_TASK",
-    item: () => {
-      return { id: task.task_id, index, isOpen: task.is_open };
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-  }, [preview]);
-
-  drag(drop(ref));
-
-  return (
-    <div
-      ref={ref}
-      style={{ opacity: isDragging ? 0.5 : 1, touchAction: "none" }}
-      data-handler-id={handlerId}
-    >
-      <TaskItem
-        key={`${task.task_id}-${task.is_open}`}
-        task={task}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onToggleStatus={onToggleStatus}
-      />
-    </div>
-  );
-};
 
 const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
@@ -335,60 +269,134 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const isTouchDevice = () => {
+    return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  };
+
   return (
-    <div key={refreshTrigger}>
-      <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
-      {todoTasks.length > 0 && (
-        <>
-          <h2 className="text-xl font-bold mb-4">Todo</h2>
-          {todoTasks.map((task, index) => (
-            <DraggableTaskItem
-              key={`${task.task_id}-${task.is_open}`}
-              task={task}
-              index={index}
-              moveTask={moveTask}
-              onEdit={startEditing}
-              onDelete={deleteTask}
-              onToggleStatus={toggleTaskStatus}
-            />
-          ))}
-        </>
-      )}
-      {doneTasks.length > 0 && (
-        <>
-          <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
-          {doneTasks.map((task, index) => (
-            <DraggableTaskItem
-              key={`${task.task_id}-${task.is_open}`}
-              task={task}
-              index={index}
-              moveTask={moveTask}
-              onEdit={startEditing}
-              onDelete={deleteTask}
-              onToggleStatus={toggleTaskStatus}
-            />
-          ))}
-        </>
-      )}
-      {todoTasks.length === 0 && doneTasks.length === 0 && (
-        <p className="text-center text-gray-500 mt-8">No tasks available.</p>
-      )}
-      {editingTask !== null && (
-        <EditTaskForm
-          editedDescription={editedDescription}
-          editedTaskDescription={editedTaskDescription}
-          editedDueDate={editedDueDate}
-          editedPriority={editedPriority}
-          onDescriptionChange={(e) => setEditedDescription(e.target.value)}
-          onTaskDescriptionChange={(e) =>
-            setEditedTaskDescription(e.target.value)
-          }
-          onDueDateChange={(e) => setEditedDueDate(e.target.value)}
-          onPriorityChange={(e) => setEditedPriority(Number(e.target.value))}
-          onSave={() => saveEdit(editingTask)}
-          onCancel={cancelEditing}
-        />
-      )}
+    <DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
+      <div key={refreshTrigger}>
+        <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
+        {todoTasks.length > 0 && (
+          <>
+            <h2 className="text-xl font-bold mb-4">Todo</h2>
+            {todoTasks.map((task, index) => (
+              <DraggableTaskItem
+                key={`${task.task_id}-${task.is_open}`}
+                task={task}
+                index={index}
+                moveTask={moveTask}
+                onEdit={startEditing}
+                onDelete={deleteTask}
+                onToggleStatus={toggleTaskStatus}
+              />
+            ))}
+          </>
+        )}
+        {doneTasks.length > 0 && (
+          <>
+            <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
+            {doneTasks.map((task, index) => (
+              <DraggableTaskItem
+                key={`${task.task_id}-${task.is_open}`}
+                task={task}
+                index={index}
+                moveTask={moveTask}
+                onEdit={startEditing}
+                onDelete={deleteTask}
+                onToggleStatus={toggleTaskStatus}
+              />
+            ))}
+          </>
+        )}
+        {todoTasks.length === 0 && doneTasks.length === 0 && (
+          <p className="text-center text-gray-500 mt-8">No tasks available.</p>
+        )}
+        {editingTask !== null && (
+          <EditTaskForm
+            editedDescription={editedDescription}
+            editedTaskDescription={editedTaskDescription}
+            editedDueDate={editedDueDate}
+            editedPriority={editedPriority}
+            onDescriptionChange={(e) => setEditedDescription(e.target.value)}
+            onTaskDescriptionChange={(e) =>
+              setEditedTaskDescription(e.target.value)
+            }
+            onDueDateChange={(e) => setEditedDueDate(e.target.value)}
+            onPriorityChange={(e) => setEditedPriority(Number(e.target.value))}
+            onSave={() => saveEdit(editingTask)}
+            onCancel={cancelEditing}
+          />
+        )}
+      </div>
+    </DndProvider>
+  );
+};
+
+const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
+  task,
+  index,
+  moveTask,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [{ handlerId }, drop] = useDrop({
+    accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId(),
+      };
+    },
+    hover(
+      item: { id: string | number; index: number; isOpen: boolean },
+      monitor
+    ) {
+      if (!ref.current) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      moveTask(dragIndex, hoverIndex, item.isOpen);
+      item.index = hoverIndex;
+    },
+  });
+
+  const [{ isDragging }, drag, preview] = useDrag({
+    type: task.is_open ? "TODO_TASK" : "DONE_TASK",
+    item: () => {
+      return { id: task.task_id, index, isOpen: task.is_open };
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+  }, [preview]);
+
+  drag(drop(ref));
+
+  return (
+    <div
+      ref={ref}
+      style={{ opacity: isDragging ? 0.5 : 1, touchAction: "none" }}
+      data-handler-id={handlerId}
+    >
+      <TaskItem
+        key={`${task.task_id}-${task.is_open}`}
+        task={task}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onToggleStatus={onToggleStatus}
+      />
     </div>
   );
 };
