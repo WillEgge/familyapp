@@ -5,6 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Task } from "@/types/task";
 import { PrioritySelect } from "@/components/PrioritySelect";
@@ -35,7 +36,7 @@ export default function AddTaskForm({
       taskDescription: "",
       description: "",
       dueDate: "",
-      priority: "low",
+      priority: "medium",
       assignee: memberId ? memberId.toString() : "",
       recurrence: "none",
     },
@@ -98,62 +99,113 @@ export default function AddTaskForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-8">
-      <Controller
-        name="taskDescription"
-        control={control}
-        rules={{ required: "Task description is required" }}
-        render={({ field }) => (
-          <Input {...field} placeholder="Task description" />
-        )}
-      />
-
-      <Controller
-        name="description"
-        control={control}
-        render={({ field }) => (
-          <Input {...field} placeholder="Task details (optional)" />
-        )}
-      />
-
-      <Controller
-        name="dueDate"
-        control={control}
-        rules={{ required: "Due date is required" }}
-        render={({ field }) => <Input {...field} type="date" />}
-      />
-
-      {!hidePriority && (
+      <div>
+        <Label htmlFor="taskDescription">Task Description</Label>
         <Controller
-          name="priority"
+          name="taskDescription"
           control={control}
-          rules={{ required: "Priority is required" }}
+          rules={{ required: "Task description is required" }}
           render={({ field }) => (
-            <PrioritySelect value={field.value} onChange={field.onChange} />
-          )}
-        />
-      )}
-
-      <Controller
-        name="recurrence"
-        control={control}
-        render={({ field }) => (
-          <RecurrenceSelect value={field.value} onChange={field.onChange} />
-        )}
-      />
-
-      {!memberId && members && (
-        <Controller
-          name="assignee"
-          control={control}
-          rules={{ required: "Assignee is required" }}
-          render={({ field }) => (
-            <AssigneeSelect
-              value={field.value}
-              onChange={field.onChange}
-              members={members}
+            <Input
+              id="taskDescription"
+              {...field}
+              placeholder="Enter task description"
             />
           )}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Task Details (optional)</Label>
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <Input
+              id="description"
+              {...field}
+              placeholder="Enter additional details"
+            />
+          )}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="dueDate">Due Date</Label>
+        <Controller
+          name="dueDate"
+          control={control}
+          rules={{ required: "Due date is required" }}
+          render={({ field }) => (
+            <Input
+              id="dueDate"
+              {...field}
+              type="date"
+              placeholder="Select due date"
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => {
+                if (!e.target.value) {
+                  e.target.type = "text";
+                }
+              }}
+            />
+          )}
+        />
+      </div>
+
+      {!hidePriority && (
+        <div>
+          <Label htmlFor="priority">Priority</Label>
+          <Controller
+            name="priority"
+            control={control}
+            rules={{ required: "Priority is required" }}
+            render={({ field }) => (
+              <PrioritySelect
+                id="priority"
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select task priority"
+              />
+            )}
+          />
+        </div>
+      )}
+
+      <div>
+        <Label htmlFor="recurrence">Recurrence</Label>
+        <Controller
+          name="recurrence"
+          control={control}
+          render={({ field }) => (
+            <RecurrenceSelect
+              id="recurrence"
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="Select task recurrence"
+            />
+          )}
+        />
+      </div>
+
+      {!memberId && members && (
+        <div>
+          <Label htmlFor="assignee">Assignee</Label>
+          <Controller
+            name="assignee"
+            control={control}
+            rules={{ required: "Assignee is required" }}
+            render={({ field }) => (
+              <AssigneeSelect
+                id="assignee"
+                value={field.value}
+                onChange={field.onChange}
+                members={members}
+                placeholder="Select task assignee"
+              />
+            )}
+          />
+        </div>
       )}
 
       <Button type="submit" disabled={isSubmitting}>
