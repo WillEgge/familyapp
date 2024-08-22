@@ -44,13 +44,7 @@ export default async function TasksPage() {
 
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser();
-
-  if (userError) {
-    console.error("Error fetching user:", userError);
-    return <div>Error loading user information. Please try again later.</div>;
-  }
 
   if (!user) {
     return <div>Please log in to view tasks.</div>;
