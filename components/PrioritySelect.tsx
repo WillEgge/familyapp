@@ -8,20 +8,27 @@ import {
 } from "@/components/ui/select";
 
 interface PrioritySelectProps {
+  id: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder: string;
 }
 
-export function PrioritySelect({ value, onChange }: PrioritySelectProps) {
+export function PrioritySelect({
+  id,
+  value,
+  onChange,
+  placeholder,
+}: PrioritySelectProps) {
   return (
-    <Select onValueChange={onChange} defaultValue={value}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select priority" />
+    <Select onValueChange={onChange} value={value}>
+      <SelectTrigger id={id}>
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="low">Low</SelectItem>
-        <SelectItem value="medium">Medium</SelectItem>
-        <SelectItem value="high">High</SelectItem>
+        <SelectItem value="low">Low Priority</SelectItem>
+        <SelectItem value="medium">Medium Priority</SelectItem>
+        <SelectItem value="high">High Priority</SelectItem>
       </SelectContent>
     </Select>
   );
