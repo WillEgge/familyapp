@@ -4,6 +4,7 @@ import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useEffect, useState } from "react";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 
 export default function TasksLayout({
   children,
@@ -18,7 +19,7 @@ export default function TasksLayout({
 
   return (
     <DndProvider backend={isTouchDevice ? TouchBackend : HTML5Backend}>
-      {children}
+      <LayoutWrapper>{children}</LayoutWrapper>
     </DndProvider>
   );
 }
