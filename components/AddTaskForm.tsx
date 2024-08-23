@@ -197,7 +197,6 @@ export default function AddTaskForm({
             rules={{ required: "Assignee is required" }}
             render={({ field }) => (
               <AssigneeSelect
-                id="assignee"
                 value={field.value}
                 onChange={field.onChange}
                 members={members}
