@@ -4,6 +4,7 @@ import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useEffect, useState } from "react";
+import VersionInfo from "@/components/VersionInfo";
 
 const touchBackendOptions = {
   enableMouseEvents: true,
@@ -27,6 +28,7 @@ export default function TasksLayout({
       options={isTouchDevice ? touchBackendOptions : undefined}
     >
       {children}
+      <VersionInfo />
     </DndProvider>
   );
 }
