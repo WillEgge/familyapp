@@ -17,13 +17,15 @@ interface TaskListProps {
   memberId: number;
 }
 
-interface DraggableTaskItemProps {
-  task: Task;
+interface DragItem {
+  id: string | number;
   index: number;
-  moveTask: (dragIndex: number, hoverIndex: number, isOpen: boolean) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string | number) => void;
-  onToggleStatus: (id: string | number) => void;
+  isOpen: boolean;
+}
+
+// Define the type for the object returned by useDrop
+interface DropResult {
+  handlerId: string | symbol | null;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
@@ -333,6 +335,15 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   );
 };
 
+interface DraggableTaskItemProps {
+  task: Task;
+  index: number;
+  moveTask: (dragIndex: number, hoverIndex: number, isOpen: boolean) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string | number) => void;
+  onToggleStatus: (id: string | number) => void;
+}
+
 const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
   task,
   index,
@@ -342,17 +353,14 @@ const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
   onToggleStatus,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [{ handlerId }, drop] = useDrop({
+  const [{ handlerId }, drop] = useDrop<DragItem, void, DropResult>({
     accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
       };
     },
-    hover(
-      item: { id: string | number; index: number; isOpen: boolean },
-      monitor
-    ) {
+    hover(item: DragItem, monitor) {
       if (!ref.current) {
         return;
       }
