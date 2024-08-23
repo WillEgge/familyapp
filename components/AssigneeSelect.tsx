@@ -11,17 +11,19 @@ interface AssigneeSelectProps {
   value: string;
   onChange: (value: string) => void;
   members: Array<{ member_id: number; first_name: string; last_name: string }>;
+  placeholder?: string;
 }
 
 export function AssigneeSelect({
   value,
   onChange,
   members,
+  placeholder,
 }: AssigneeSelectProps) {
   return (
     <Select onValueChange={onChange} defaultValue={value}>
       <SelectTrigger>
-        <SelectValue placeholder="Select assignee" />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {members.map((member) => (
