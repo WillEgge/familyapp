@@ -19,7 +19,7 @@ const config = {
     },
     extend: {
       screens: {
-        xs: "480px", // Add this line for the custom breakpoint
+        xs: "320px", // Add this line for the custom breakpoint
       },
       colors: {
         border: "hsl(var(--border))",
