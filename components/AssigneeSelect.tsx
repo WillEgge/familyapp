@@ -11,7 +11,7 @@ interface AssigneeSelectProps {
   value: string;
   onChange: (value: string) => void;
   members: Array<{ member_id: number; first_name: string; last_name: string }>;
-  placeholder?: string;
+  placeholder: string;
 }
 
 export function AssigneeSelect({
@@ -21,8 +21,8 @@ export function AssigneeSelect({
   placeholder,
 }: AssigneeSelectProps) {
   return (
-    <Select onValueChange={onChange} defaultValue={value}>
-      <SelectTrigger>
+    <Select onValueChange={onChange} value={value}>
+      <SelectTrigger className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
