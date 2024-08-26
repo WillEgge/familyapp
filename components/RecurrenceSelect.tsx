@@ -1,3 +1,5 @@
+// File: components/RecurrenceSelect.tsx
+
 import React from "react";
 import {
   Select,
@@ -22,11 +24,11 @@ export function RecurrenceSelect({
 }: RecurrenceSelectProps) {
   return (
     <Select onValueChange={onChange} value={value}>
-      <SelectTrigger id={id}>
+      <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="none">No Recurrence</SelectItem>
+        <SelectItem value="none">None</SelectItem>
         <SelectItem value="daily">Daily</SelectItem>
         <SelectItem value="weekly">Weekly</SelectItem>
         <SelectItem value="monthly">Monthly</SelectItem>
