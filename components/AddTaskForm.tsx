@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { createClient } from "@/utils/supabase/client";
@@ -99,115 +97,123 @@ export default function AddTaskForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-8">
-      <div>
-        <Label htmlFor="taskDescription">Task Description</Label>
-        <Controller
-          name="taskDescription"
-          control={control}
-          rules={{ required: "Task description is required" }}
-          render={({ field }) => (
-            <Input
-              id="taskDescription"
-              {...field}
-              placeholder="Enter task description"
-            />
-          )}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="description">Task Details (optional)</Label>
-        <Controller
-          name="description"
-          control={control}
-          render={({ field }) => (
-            <Input
-              id="description"
-              {...field}
-              placeholder="Enter additional details"
-            />
-          )}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="dueDate">Due Date</Label>
-        <Controller
-          name="dueDate"
-          control={control}
-          rules={{ required: "Due date is required" }}
-          render={({ field }) => (
-            <Input
-              id="dueDate"
-              {...field}
-              type="date"
-              placeholder="Select due date"
-              onFocus={(e) => (e.target.type = "date")}
-              onBlur={(e) => {
-                if (!e.target.value) {
-                  e.target.type = "text";
-                }
-              }}
-            />
-          )}
-        />
-      </div>
-
-      {!hidePriority && (
-        <div>
-          <Label htmlFor="priority">Priority</Label>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="taskDescription">Task Description</Label>
           <Controller
-            name="priority"
+            name="taskDescription"
             control={control}
-            rules={{ required: "Priority is required" }}
+            rules={{ required: "Task description is required" }}
             render={({ field }) => (
-              <PrioritySelect
-                id="priority"
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Select task priority"
+              <Input
+                id="taskDescription"
+                {...field}
+                placeholder="Enter task description"
               />
             )}
           />
         </div>
-      )}
 
-      <div>
-        <Label htmlFor="recurrence">Recurrence</Label>
-        <Controller
-          name="recurrence"
-          control={control}
-          render={({ field }) => (
-            <RecurrenceSelect
-              id="recurrence"
-              value={field.value}
-              onChange={field.onChange}
-              placeholder="Select task recurrence"
-            />
-          )}
-        />
-      </div>
-
-      {!memberId && members && (
-        <div>
-          <Label htmlFor="assignee">Assignee</Label>
+        <div className="space-y-2">
+          <Label htmlFor="description">Task Details (optional)</Label>
           <Controller
-            name="assignee"
+            name="description"
             control={control}
-            rules={{ required: "Assignee is required" }}
             render={({ field }) => (
-              <AssigneeSelect
-                value={field.value}
-                onChange={field.onChange}
-                members={members}
-                placeholder="Select task assignee"
+              <Input
+                id="description"
+                {...field}
+                placeholder="Enter additional details"
               />
             )}
           />
         </div>
-      )}
 
-      <Button type="submit" disabled={isSubmitting}>
+        <div className="space-y-2">
+          <Label htmlFor="dueDate">Due Date</Label>
+          <Controller
+            name="dueDate"
+            control={control}
+            rules={{ required: "Due date is required" }}
+            render={({ field }) => (
+              <Input
+                id="dueDate"
+                {...field}
+                type="date"
+                placeholder="Select due date"
+                onFocus={(e) => (e.target.type = "date")}
+                onBlur={(e) => {
+                  if (!e.target.value) {
+                    e.target.type = "text";
+                  }
+                }}
+              />
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
+          {!hidePriority && (
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Controller
+                name="priority"
+                control={control}
+                rules={{ required: "Priority is required" }}
+                render={({ field }) => (
+                  <PrioritySelect
+                    id="priority"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select priority"
+                  />
+                )}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="recurrence">Recurrence</Label>
+            <Controller
+              name="recurrence"
+              control={control}
+              render={({ field }) => (
+                <RecurrenceSelect
+                  id="recurrence"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select recurrence"
+                />
+              )}
+            />
+          </div>
+        </div>
+
+        {!memberId && members && (
+          <div className="space-y-2">
+            <Label htmlFor="assignee">Assignee</Label>
+            <Controller
+              name="assignee"
+              control={control}
+              rules={{ required: "Assignee is required" }}
+              render={({ field }) => (
+                <AssigneeSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  members={members}
+                  placeholder="Select assignee"
+                />
+              )}
+            />
+          </div>
+        )}
+      </div>
+
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full xs:w-auto"
+      >
         {isSubmitting ? "Adding..." : "Add Task"}
       </Button>
     </form>
