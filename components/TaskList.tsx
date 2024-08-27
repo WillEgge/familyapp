@@ -1,31 +1,32 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { useDrag, useDrop, DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { TouchBackend } from "react-dnd-touch-backend";
-import { getEmptyImage } from "react-dnd-html5-backend";
 import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
 import { EditTaskForm } from "@/components/EditTaskForm";
 import { toast } from "sonner";
 import AddTaskForm from "@/components/AddTaskForm";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { calculateNextDueDate } from "@/utils/dateUtils";
 
 interface TaskListProps {
   initialTasks: Task[];
   memberId: number;
-}
-
-interface DragItem {
-  id: string | number;
-  index: number;
-  isOpen: boolean;
-}
-
-// Define the type for the object returned by useDrop
-interface DropResult {
-  handlerId: string | symbol | null;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
@@ -40,6 +41,13 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lastDeletedTask, setLastDeletedTask] = useState<Task | null>(null);
   const supabase = createClient();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (Array.isArray(tasks)) {
@@ -63,40 +71,37 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
     }
   }, [refreshTrigger]);
 
-  const moveTask = async (
-    dragIndex: number,
-    hoverIndex: number,
-    isOpen: boolean
-  ) => {
-    const taskList = isOpen ? todoTasks : doneTasks;
-    const reorderedTasks = [...taskList];
-    const [movedTask] = reorderedTasks.splice(dragIndex, 1);
-    reorderedTasks.splice(hoverIndex, 0, movedTask);
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    if (isOpen) {
-      setTodoTasks(reorderedTasks);
-    } else {
-      setDoneTasks(reorderedTasks);
-    }
+    if (active.id !== over?.id) {
+      const oldIndex = todoTasks.findIndex(
+        (task) => task.task_id === active.id
+      );
+      const newIndex = todoTasks.findIndex((task) => task.task_id === over?.id);
 
-    const updates = reorderedTasks.map((task, index) => ({
-      task_id: task.task_id,
-      order: index,
-    }));
+      const newTasks = arrayMove(todoTasks, oldIndex, newIndex);
+      setTodoTasks(newTasks);
 
-    for (const update of updates) {
-      const { error } = await supabase
-        .from("task")
-        .update({ order: update.order })
-        .eq("task_id", update.task_id);
+      const updates = newTasks.map((task, index) => ({
+        task_id: task.task_id,
+        order: index,
+      }));
 
-      if (error) {
-        console.error("Error updating task order:", error);
-        toast.error("Failed to update task order");
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("task")
+          .update({ order: update.order })
+          .eq("task_id", update.task_id);
+
+        if (error) {
+          console.error("Error updating task order:", error);
+          toast.error("Failed to update task order");
+        }
       }
-    }
 
-    setRefreshTrigger((prev) => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
+    }
   };
 
   const toggleTaskStatus = async (taskId: string | number) => {
@@ -152,30 +157,6 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
         }
       }
     }
-  };
-
-  const calculateNextDueDate = (
-    currentDueDate: string,
-    recurrence: string
-  ): string => {
-    const date = new Date(currentDueDate);
-    switch (recurrence) {
-      case "daily":
-        date.setDate(date.getDate() + 1);
-        break;
-      case "weekly":
-        date.setDate(date.getDate() + 7);
-        break;
-      case "monthly":
-        date.setMonth(date.getMonth() + 1);
-        break;
-      case "yearly":
-        date.setFullYear(date.getFullYear() + 1);
-        break;
-      default:
-        return currentDueDate;
-    }
-    return date.toISOString().split("T")[0];
   };
 
   const startEditing = (task: Task) => {
@@ -271,39 +252,40 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const isTouchDevice = () => {
-    return "ontouchstart" in window || navigator.maxTouchPoints > 0;
-  };
-
   return (
-    <DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
       <div key={refreshTrigger}>
         <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
         {todoTasks.length > 0 && (
           <>
             <h2 className="text-xl font-bold mb-4">Todo</h2>
-            {todoTasks.map((task, index) => (
-              <DraggableTaskItem
-                key={`${task.task_id}-${task.is_open}`}
-                task={task}
-                index={index}
-                moveTask={moveTask}
-                onEdit={startEditing}
-                onDelete={deleteTask}
-                onToggleStatus={toggleTaskStatus}
-              />
-            ))}
+            <SortableContext
+              items={todoTasks.map((task) => task.task_id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {todoTasks.map((task) => (
+                <TaskItem
+                  key={task.task_id}
+                  task={task}
+                  onEdit={startEditing}
+                  onDelete={deleteTask}
+                  onToggleStatus={toggleTaskStatus}
+                />
+              ))}
+            </SortableContext>
           </>
         )}
         {doneTasks.length > 0 && (
           <>
             <h2 className="text-xl font-bold mt-8 mb-4">Done</h2>
-            {doneTasks.map((task, index) => (
-              <DraggableTaskItem
-                key={`${task.task_id}-${task.is_open}`}
+            {doneTasks.map((task) => (
+              <TaskItem
+                key={task.task_id}
                 task={task}
-                index={index}
-                moveTask={moveTask}
                 onEdit={startEditing}
                 onDelete={deleteTask}
                 onToggleStatus={toggleTaskStatus}
@@ -331,81 +313,7 @@ const TaskList: React.FC<TaskListProps> = ({ initialTasks, memberId }) => {
           />
         )}
       </div>
-    </DndProvider>
-  );
-};
-
-interface DraggableTaskItemProps {
-  task: Task;
-  index: number;
-  moveTask: (dragIndex: number, hoverIndex: number, isOpen: boolean) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string | number) => void;
-  onToggleStatus: (id: string | number) => void;
-}
-
-const DraggableTaskItem: React.FC<DraggableTaskItemProps> = ({
-  task,
-  index,
-  moveTask,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [{ handlerId }, drop] = useDrop<DragItem, void, DropResult>({
-    accept: task.is_open ? "TODO_TASK" : "DONE_TASK",
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
-    },
-    hover(item: DragItem, monitor) {
-      if (!ref.current) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = index;
-
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      moveTask(dragIndex, hoverIndex, item.isOpen);
-      item.index = hoverIndex;
-    },
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: task.is_open ? "TODO_TASK" : "DONE_TASK",
-    item: () => {
-      return { id: task.task_id, index, isOpen: task.is_open };
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-  }, [preview]);
-
-  drag(drop(ref));
-
-  return (
-    <div
-      ref={ref}
-      style={{ opacity: isDragging ? 0.5 : 1, touchAction: "none" }}
-      data-handler-id={handlerId}
-    >
-      <TaskItem
-        key={`${task.task_id}-${task.is_open}`}
-        task={task}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onToggleStatus={onToggleStatus}
-      />
-    </div>
+    </DndContext>
   );
 };
 

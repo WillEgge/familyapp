@@ -4,6 +4,8 @@ import { Trash2, RepeatIcon } from "lucide-react";
 import { Task } from "@/types/task";
 import { formatDueDate } from "@/utils/dateUtils";
 import { isToday, isTomorrow, isPast, parseISO } from "date-fns";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface TaskItemProps {
   task: Task;
@@ -18,6 +20,14 @@ export function TaskItem({
   onDelete,
   onToggleStatus,
 }: TaskItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: task.task_id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const getDueDateColor = (dueDate: string): string => {
     const date = parseISO(dueDate);
     if (isToday(date)) return "text-gray-500 bg-gray-100";
@@ -32,7 +42,11 @@ export function TaskItem({
 
   return (
     <div
-      className="bg-white p-4 rounded shadow mb-2 transition-all duration-300 ease-in-out"
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-white p-4 rounded shadow mb-2 transition-all duration-300 ease-in-out cursor-move"
       onDoubleClick={() => onEdit(task)}
     >
       <div className="flex items-center justify-between">
