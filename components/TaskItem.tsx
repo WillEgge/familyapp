@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useRef, useEffect, use } from "react";
+import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, RepeatIcon } from "lucide-react";
 import { Task } from "@/types/task";
 import { formatDueDate } from "@/utils/dateUtils";
 import { isToday, isTomorrow, isPast, parseISO } from "date-fns";
+import { effect } from "zod";
 
 interface TaskItemProps {
   task: Task;
+  index: number;
   onEdit: (task: Task) => void;
   onDelete: (id: string | number) => void;
   onToggleStatus: (id: string | number) => void;
@@ -14,6 +18,7 @@ interface TaskItemProps {
 
 export function TaskItem({
   task,
+  index,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -24,15 +29,49 @@ export function TaskItem({
     if (isTomorrow(date) || date > new Date())
       return "text-blue-500 bg-blue-100";
     if (isPast(date)) return "text-red-500 bg-red-100";
-    return "text-gray-500 bg-gray-100"; // fallback, should not occur
+    return "text-gray-500 bg-gray-100";
   };
 
   const formattedDate = task.due_date ? formatDueDate(task.due_date) : "";
   const dueDateColor = task.due_date ? getDueDateColor(task.due_date) : "";
 
+  const draggableRef = useRef<HTMLDivElement>(null);
+
+  // test start
+
+  useEffect(() => {
+    const element = draggableRef.current;
+    if (!element) {
+      return;
+    }
+    return draggable({
+      element,
+      // onDragStart(): void {
+      //   console.log("drag start");
+      // },
+      // onDrop(): void {
+      //   console.log("drop");
+      // },
+    });
+  }, []);
+
+  // test end
+
+  useEffect(() => {
+    if (draggableRef.current) {
+      const cleanup = draggable({
+        element: draggableRef.current,
+        id: `task-${task.task_id}`,
+        data: { index, taskId: task.task_id },
+      });
+      return cleanup;
+    }
+  }, [task.task_id, index]);
+
   return (
     <div
-      className="bg-white p-4 rounded shadow mb-2 transition-all duration-300 ease-in-out"
+      ref={draggableRef}
+      className="bg-white p-4 rounded shadow mb-2 transition-all duration-300 ease-in-out cursor-move"
       onDoubleClick={() => onEdit(task)}
     >
       <div className="flex items-center justify-between">
