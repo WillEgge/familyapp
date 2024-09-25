@@ -1,9 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import dynamic from "next/dynamic";
+import TaskBoard from "@/components/TaskBoard";
 import { Task } from "@/types/task";
-
-const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
 
 export default async function MemberTasks({
   params,
@@ -52,7 +50,7 @@ export default async function MemberTasks({
         <h1 className="text-4xl font-bold mb-8">
           Tasks for {member.first_name} {member.last_name}
         </h1>
-        <TaskList initialTasks={tasks as Task[]} memberId={memberId} />
+        <TaskBoard initialTasks={tasks as Task[]} memberId={memberId} />
       </div>
     </div>
   );
