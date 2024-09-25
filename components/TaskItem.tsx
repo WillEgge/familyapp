@@ -1,4 +1,6 @@
-import React, { useRef, useEffect, use } from "react";
+"use client";
+
+import React, { useRef, useEffect, useState } from "react";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { Checkbox } from "@/components/ui/checkbox";
