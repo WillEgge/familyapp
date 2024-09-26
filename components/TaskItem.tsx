@@ -39,36 +39,40 @@ export function TaskItem({
 
   const draggableRef = useRef<HTMLDivElement>(null);
 
-  // test start
-
   useEffect(() => {
     const element = draggableRef.current;
-    if (!element) {
-      return;
-    }
-    return draggable({
+    if (!element) return;
+    
+    const dragConfig = {
       element,
-      // onDragStart(): void {
-      //   console.log("drag start");
-      // },
-      // onDrop(): void {
-      //   console.log("drop");
-      // },
-    });
-  }, []);
+      getInitialData() {
+        return task.task_id;
+      },
+    };
 
-  // test end
+    const dropConfig = {
+      element,
+      getData() {
+        return task.task_id;
+      },
+      canDrop({ source }) {
+        return source.element !== element;
+      },
+    };
 
-  useEffect(() => {
-    if (draggableRef.current) {
-      const cleanup = draggable({
-        element: draggableRef.current,
-        id: `task-${task.task_id}`,
-        data: { index, taskId: task.task_id },
-      });
-      return cleanup;
-    }
-  }, [task.task_id, index]);
+    return combine(draggable(dragConfig), dropTargetForElements(dropConfig));    
+  }, [task.task_id]);
+
+  // useEffect(() => {
+  //   if (draggableRef.current) {
+  //     const cleanup = draggable({
+  //       element: draggableRef.current,
+  //       id: `task-${task.task_id}`,
+  //       data: { index, taskId: task.task_id },
+  //     });
+  //     return cleanup;
+  //   }
+  // }, [task.task_id, index]);
 
   return (
     <div
