@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,7 +6,6 @@ import { Trash2, RepeatIcon } from "lucide-react";
 import { Task } from "@/types/task";
 import { formatDueDate } from "@/utils/dateUtils";
 import { isToday, isTomorrow, isPast, parseISO } from "date-fns";
-import { effect } from "zod";
 
 interface TaskItemProps {
   task: Task;
@@ -16,6 +13,7 @@ interface TaskItemProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string | number) => void;
   onToggleStatus: (id: string | number) => void;
+  onDragEnd: (sourceIndex: number, destinationIndex: number) => void;
 }
 
 export function TaskItem({
@@ -24,6 +22,7 @@ export function TaskItem({
   onEdit,
   onDelete,
   onToggleStatus,
+  onDragEnd,
 }: TaskItemProps) {
   const getDueDateColor = (dueDate: string): string => {
     const date = parseISO(dueDate);
@@ -46,33 +45,32 @@ export function TaskItem({
     const dragConfig = {
       element,
       getInitialData() {
-        return task.task_id;
+        return { taskId: task.task_id, index };
       },
     };
 
     const dropConfig = {
       element,
-      getData() {
-        return task.task_id;
+      getDropEffect() {
+        return 'move' as const;
       },
-      canDrop({ source }) {
+      getData() {
+        return { taskId: task.task_id, index };
+      },
+      canDrop({ source }: { source: any }) {
         return source.element !== element;
+      },
+      onDragEnter: () => {},
+      onDragLeave: () => {},
+      onDrop(args: any) {
+        const sourceIndex = args.source.data.index;
+        const destinationIndex = index;
+        onDragEnd(sourceIndex, destinationIndex);
       },
     };
 
     return combine(draggable(dragConfig), dropTargetForElements(dropConfig));    
-  }, [task.task_id]);
-
-  // useEffect(() => {
-  //   if (draggableRef.current) {
-  //     const cleanup = draggable({
-  //       element: draggableRef.current,
-  //       id: `task-${task.task_id}`,
-  //       data: { index, taskId: task.task_id },
-  //     });
-  //     return cleanup;
-  //   }
-  // }, [task.task_id, index]);
+  }, [task.task_id, index, onDragEnd]);
 
   return (
     <div
