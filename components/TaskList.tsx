@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { Task } from "@/types/task";
 import { TaskItem } from "@/components/TaskItem";
@@ -8,12 +6,14 @@ interface TaskListProps {
   tasks: Task[];
   onDelete: (taskId: string | number) => Promise<void>;
   onToggleStatus: (taskId: string | number) => Promise<void>;
+  onDragEnd: (sourceIndex: number, destinationIndex: number) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({
   tasks,
   onDelete,
   onToggleStatus,
+  onDragEnd,
 }) => {
   return (
     <div>
@@ -23,9 +23,10 @@ const TaskList: React.FC<TaskListProps> = ({
             key={`${task.task_id}-${task.is_open}`}
             task={task}
             index={index}
-            onEdit={() => {}} 
+            onEdit={() => {}}
             onDelete={onDelete}
             onToggleStatus={onToggleStatus}
+            onDragEnd={onDragEnd}
           />
         ))
       ) : (
