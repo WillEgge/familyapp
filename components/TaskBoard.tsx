@@ -105,6 +105,42 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ initialTasks, memberId }) => {
     }
   };
 
+  const handleDragEnd = async (
+    sourceIndex: number,
+    destinationIndex: number,
+    columnType: "todo" | "done"
+  ) => {
+    const tasksToUpdate = columnType === "todo" ? todoTasks : doneTasks;
+    const updatedTasks = Array.from(tasksToUpdate);
+    const [reorderedTask] = updatedTasks.splice(sourceIndex, 1);
+    updatedTasks.splice(destinationIndex, 0, reorderedTask);
+
+    const updatedTasksWithOrder = updatedTasks.map((task, index) => ({
+      ...task,
+      order: index,
+    }));
+
+    setTasks((prevTasks) => [
+      ...prevTasks.filter((task) => task.is_open !== (columnType === "todo")),
+      ...updatedTasksWithOrder,
+    ]);
+
+    // Update the order in the database
+    const { error } = await supabase.from("task").upsert(
+      updatedTasksWithOrder.map((task) => ({
+        task_id: task.task_id,
+        order: task.order,
+      }))
+    );
+
+    if (error) {
+      console.error("Error updating task order:", error);
+      toast.error("Failed to update task order");
+    } else {
+      toast.success("Task order updated");
+    }
+  };
+
   return (
     <div>
       <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
@@ -114,6 +150,9 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ initialTasks, memberId }) => {
           tasks={todoTasks}
           onDelete={deleteTask}
           onToggleStatus={toggleTaskStatus}
+          onDragEnd={(sourceIndex, destinationIndex) =>
+            handleDragEnd(sourceIndex, destinationIndex, "todo")
+          }
         />
       )}
       {doneTasks.length > 0 && (
@@ -122,6 +161,9 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ initialTasks, memberId }) => {
           tasks={doneTasks}
           onDelete={deleteTask}
           onToggleStatus={toggleTaskStatus}
+          onDragEnd={(sourceIndex, destinationIndex) =>
+            handleDragEnd(sourceIndex, destinationIndex, "done")
+          }
         />
       )}
       {todoTasks.length === 0 && doneTasks.length === 0 && (
