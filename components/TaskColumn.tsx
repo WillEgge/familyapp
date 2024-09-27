@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { Task } from "@/types/task";
 import TaskList from "@/components/TaskList";
@@ -9,6 +7,7 @@ interface TaskColumnProps {
   tasks: Task[];
   onDelete: (taskId: string | number) => Promise<void>;
   onToggleStatus: (taskId: string | number) => Promise<void>;
+  onDragEnd: (sourceIndex: number, destinationIndex: number) => void;
 }
 
 const TaskColumn: React.FC<TaskColumnProps> = ({
@@ -16,6 +15,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   tasks,
   onDelete,
   onToggleStatus,
+  onDragEnd,
 }) => {
   return (
     <div className="mb-8">
@@ -24,6 +24,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
         tasks={tasks}
         onDelete={onDelete}
         onToggleStatus={onToggleStatus}
+        onDragEnd={onDragEnd}
       />
     </div>
   );
