@@ -8,18 +8,20 @@ export default async function MemberTasks({
 }: {
   params: { memberId: string };
 }) {
+  console.log("params.memberId:", params.memberId);
+  
   const supabase = createClient();
-
+  
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
+  
   if (!user) {
     redirect("/signin");
   }
-
+  
   const memberId = parseInt(params.memberId);
-
+  
   // Fetch member details
   const { data: member, error: memberError } = await supabase
     .from("member")
