@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/accordion";
 import { Task } from "@/types/task";
 
-const TaskList = dynamic(() => import("@/components/TaskList"), { ssr: false });
+const TaskBoard = dynamic(() => import("@/components/TaskBoard"), {
+  ssr: false,
+});
 
 interface Member {
   member_id: number;
@@ -99,7 +101,7 @@ export default async function TasksPage() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-gray-100 p-4 rounded-md">
-                <TaskList
+                <TaskBoard
                   initialTasks={tasksByAssignee[member.member_id] || []}
                   memberId={member.member_id}
                 />
