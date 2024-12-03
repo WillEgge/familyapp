@@ -1,36 +1,34 @@
+"use client";
+
 import React from "react";
 import { Task } from "@/types/task";
-import { TaskItem } from "@/components/TaskItem";
+import TaskItem from "@/components/TaskItem";
 
 interface TaskListProps {
   tasks: Task[];
-  onDelete: (taskId: string | number) => Promise<void>;
-  onToggleStatus: (taskId: string | number) => Promise<void>;
-  onDragEnd: (sourceIndex: number, destinationIndex: number) => void;
+  onMove: (
+    taskId: number,
+    targetColumn: "todo" | "done",
+    targetPosition: number
+  ) => Promise<void>;
+  onDelete: (taskId: number) => Promise<void>;
 }
 
-const TaskList: React.FC<TaskListProps> = ({
-  tasks,
-  onDelete,
-  onToggleStatus,
-  onDragEnd,
-}) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, onMove, onDelete }) => {
   return (
-    <div>
-      {tasks && tasks.length > 0 ? (
+    <div className="space-y-2">
+      {tasks.length > 0 ? (
         tasks.map((task, index) => (
           <TaskItem
-            key={`${task.task_id}-${task.is_open}`}
+            key={task.task_id}
             task={task}
             index={index}
-            onEdit={() => {}}
+            onMove={onMove}
             onDelete={onDelete}
-            onToggleStatus={onToggleStatus}
-            onDragEnd={onDragEnd}
           />
         ))
       ) : (
-        <p>No tasks available.</p>
+        <p className="text-center text-gray-500">No tasks available.</p>
       )}
     </div>
   );

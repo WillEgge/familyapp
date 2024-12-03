@@ -1,174 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { Task } from "@/types/task";
+import React from "react";
 import TaskColumn from "@/components/TaskColumn";
 import AddTaskForm from "@/components/AddTaskForm";
-import { toast } from "sonner";
+import { useBoard } from "@/utils/BoardProvider";
 
 interface TaskBoardProps {
-  initialTasks: Task[];
   memberId: number;
 }
 
-const TaskBoard: React.FC<TaskBoardProps> = ({ initialTasks, memberId }) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
-  const [todoTasks, setTodoTasks] = useState<Task[]>([]);
-  const [doneTasks, setDoneTasks] = useState<Task[]>([]);
-  const [lastDeletedTask, setLastDeletedTask] = useState<Task | null>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    if (Array.isArray(tasks)) {
-      const todo = tasks
-        .filter((task) => task.is_open)
-        .sort((a, b) => a.order - b.order);
-      const done = tasks
-        .filter((task) => !task.is_open)
-        .sort((a, b) => a.order - b.order);
-      setTodoTasks(todo);
-      setDoneTasks(done);
-    }
-  }, [tasks]);
-
-  const handleTaskAdded = (newTask: Task) => {
-    setTasks((prevTasks) => [...prevTasks, newTask]);
-  };
-
-  const deleteTask = async (taskId: string | number) => {
-    const taskToDelete = tasks.find((task) => task.task_id === taskId);
-    if (taskToDelete) {
-      setLastDeletedTask(taskToDelete);
-    }
-
-    const { error } = await supabase
-      .from("task")
-      .delete()
-      .eq("task_id", taskId);
-
-    if (error) {
-      console.error("Error deleting task:", error);
-      toast.error("Failed to delete task");
-    } else {
-      setTasks((prevTasks) =>
-        prevTasks.filter((task) => task.task_id !== taskId)
-      );
-      toast.success("Task deleted successfully", {
-        action: {
-          label: "Undo",
-          onClick: () => undoDelete(),
-        },
-      });
-    }
-  };
-
-  const undoDelete = async () => {
-    if (lastDeletedTask) {
-      const { data, error } = await supabase
-        .from("task")
-        .insert([lastDeletedTask])
-        .select();
-
-      if (error) {
-        console.error("Error restoring task:", error);
-        toast.error("Failed to restore task");
-      } else if (data) {
-        setTasks((prevTasks) => [...prevTasks, data[0]]);
-        setLastDeletedTask(null);
-        toast.success("Task restored successfully");
-      }
-    }
-  };
-
-  const toggleTaskStatus = async (taskId: string | number) => {
-    const taskToToggle = tasks.find((task) => task.task_id === taskId);
-    if (taskToToggle) {
-      const newStatus = !taskToToggle.is_open;
-      const { data, error } = await supabase
-        .from("task")
-        .update({ is_open: newStatus })
-        .eq("task_id", taskId)
-        .select();
-
-      if (error) {
-        console.error("Error toggling task status:", error);
-        toast.error("Failed to update task status");
-      } else if (data) {
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.task_id === taskId ? { ...task, is_open: newStatus } : task
-          )
-        );
-        toast.success(`Task marked as ${newStatus ? "todo" : "done"}`);
-      }
-    }
-  };
-
-  const handleDragEnd = async (
-    sourceIndex: number,
-    destinationIndex: number,
-    columnType: "todo" | "done"
-  ) => {
-    const tasksToUpdate = columnType === "todo" ? todoTasks : doneTasks;
-    const updatedTasks = Array.from(tasksToUpdate);
-    const [reorderedTask] = updatedTasks.splice(sourceIndex, 1);
-    updatedTasks.splice(destinationIndex, 0, reorderedTask);
-
-    const updatedTasksWithOrder = updatedTasks.map((task, index) => ({
-      ...task,
-      order: index,
-    }));
-
-    setTasks((prevTasks) => [
-      ...prevTasks.filter((task) => task.is_open !== (columnType === "todo")),
-      ...updatedTasksWithOrder,
-    ]);
-
-    // Update the order in the database
-    const { error } = await supabase.from("task").upsert(
-      updatedTasksWithOrder.map((task) => ({
-        task_id: task.task_id,
-        order: task.order,
-      }))
-    );
-
-    if (error) {
-      console.error("Error updating task order:", error);
-      toast.error("Failed to update task order");
-    } else {
-      toast.success("Task order updated");
-    }
-  };
+const TaskBoard: React.FC<TaskBoardProps> = ({ memberId }) => {
+  const { todoTasks, doneTasks, moveTask, addTask, deleteTask } = useBoard();
 
   return (
     <div>
-      <AddTaskForm memberId={memberId} onTaskAdded={handleTaskAdded} />
-      {todoTasks.length > 0 && (
+      <AddTaskForm memberId={memberId} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TaskColumn
           title="Todo"
           tasks={todoTasks}
+          onMove={moveTask}
           onDelete={deleteTask}
-          onToggleStatus={toggleTaskStatus}
-          onDragEnd={(sourceIndex, destinationIndex) =>
-            handleDragEnd(sourceIndex, destinationIndex, "todo")
-          }
         />
-      )}
-      {doneTasks.length > 0 && (
         <TaskColumn
           title="Done"
           tasks={doneTasks}
+          onMove={moveTask}
           onDelete={deleteTask}
-          onToggleStatus={toggleTaskStatus}
-          onDragEnd={(sourceIndex, destinationIndex) =>
-            handleDragEnd(sourceIndex, destinationIndex, "done")
-          }
         />
-      )}
-      {todoTasks.length === 0 && doneTasks.length === 0 && (
-        <p className="text-center text-gray-500 mt-8">No tasks available.</p>
-      )}
+      </div>
     </div>
   );
 };
